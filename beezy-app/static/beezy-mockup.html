@@ -1,0 +1,1484 @@
+
+<!doctype html>
+<!--
+  KKB — offline group budget tracker for friends who travel together.
+  Single self-contained file. All state persists to localStorage (works offline).
+  Visual system: Hugging Face (sunshine yellow + IBM Plex Mono identity).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffd21e" />
+  <title>KKB · Split trips, stay friends</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ════════════════════════════════════════════════════════════════════
+       TOKENS — Hugging Face design system (tokens.css, pasted verbatim)
+       Do not redefine. All colors resolve through these vars.
+       ════════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-warm: #fff4cc;
+
+      --fg: #0d1117;
+      --fg-2: #374151;
+      --muted: #6b7280;
+      --meta: var(--muted);
+
+      --border: #e5e7eb;
+      --border-soft: #f3f4f6;
+
+      --accent: #ffd21e;
+      --accent-on: #0d1117;
+      --accent-hover: #f59e0b;
+      --accent-active: color-mix(in oklab, var(--accent), black 20%);
+
+      --success: #16a34a;
+      --warn: #f59e0b;
+      --danger: #dc2626;
+
+      --font-display: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --font-body: "Source Sans Pro", Inter, system-ui, -apple-system, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+      --text-xs: 12px;
+      --text-sm: 13px;
+      --text-base: 15px;
+      --text-lg: 18px;
+      --text-xl: 24px;
+      --text-2xl: 32px;
+
+      --leading-body: 1.55;
+      --leading-tight: 1.1;
+      --tracking-display: -0.01em;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-pill: 9999px;
+
+      --elev-flat: none;
+      --elev-ring: 0 0 0 1px var(--border);
+      --elev-raised: 0 2px 8px color-mix(in oklab, var(--fg), transparent 90%);
+
+      --focus-ring: 0 0 0 3px rgba(13, 17, 23, 0.1);
+
+      --motion-fast: 120ms;
+      --motion-base: 200ms;
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+      --container-max: 1280px;
+      --container-gutter-desktop: 24px;
+      --container-gutter-tablet: 16px;
+      --container-gutter-phone: 12px;
+
+      /* Supplementary HF category accents (sourced from DESIGN.md §2 — used for
+         participant avatars + task tags, never invented ad-hoc). */
+      --cat-blue: #2563eb;
+      --cat-green: #16a34a;
+      --cat-purple: #9333ea;
+      --cat-pink: #db2777;
+      --cat-orange: #ea580c;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+       RESET + BASE
+       ════════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: color-mix(in oklab, var(--fg) 7%, var(--bg)); /* neutral desktop backdrop */
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: var(--leading-body);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    img, svg { display: block; max-width: 100%; }
+    button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
+    input, select, textarea { font: inherit; }
+    h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-display); }
+    p { margin: 0; text-wrap: pretty; }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       APP SHELL — phone-width column, internal scroll
+       ════════════════════════════════════════════════════════════════════ */
+    .app {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 100dvh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--border), 0 24px 60px color-mix(in oklab, var(--fg), transparent 86%);
+    }
+    @media (min-width: 600px) { .app { height: min(100dvh, 920px); border-radius: 28px; margin-block: 0; } }
+
+    /* App bar */
+    .appbar {
+      flex: 0 0 auto;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+    }
+    .appbar-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); }
+    .brand-badge {
+      width: 34px; height: 34px; flex: 0 0 auto;
+      border-radius: var(--radius-lg);
+      background: var(--accent);
+      display: grid; place-items: center;
+      font-size: 19px; line-height: 1;
+    }
+    .appbar-titles { min-width: 0; flex: 1 1 auto; }
+    .appbar-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .appbar-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .icon-btn {
+      width: 36px; height: 36px; flex: 0 0 auto;
+      display: grid; place-items: center;
+      border-radius: var(--radius-md);
+      color: var(--fg-2);
+      transition: background var(--motion-fast) var(--ease-standard);
+    }
+    .icon-btn:hover { background: var(--border-soft); }
+    .icon-btn svg { width: 20px; height: 20px; }
+    .icon-btn .back-arrow { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* Content scroll region */
+    .content { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    .screen { padding: 16px 16px 104px; }
+    .screen-head { margin-bottom: 14px; }
+    .screen-head h2 { font-size: var(--text-xl); font-weight: 600; }
+    .screen-head p { color: var(--muted); font-size: var(--text-sm); margin-top: 3px; }
+
+    /* Section eyebrow */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .eyebrow-accent { color: var(--fg); }
+
+    /* ════════════════════════════════════════════════════════════════════
+       TAB BAR
+       ════════════════════════════════════════════════════════════════════ */
+    .tabbar {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 20;
+    }
+    .tab {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
+      color: var(--muted);
+      transition: color var(--motion-fast) var(--ease-standard);
+      position: relative;
+    }
+    .tab svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .tab .tab-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em; }
+    .tab.active { color: var(--fg); }
+    .tab.active::before {
+      content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 26px; height: 3px; border-radius: 0 0 var(--radius-pill) var(--radius-pill);
+      background: var(--accent);
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+       FAB
+       ════════════════════════════════════════════════════════════════════ */
+    .fab {
+      position: absolute;
+      right: 16px;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      width: 54px; height: 54px;
+      border-radius: 16px;
+      background: var(--accent);
+      color: var(--accent-on);
+      display: grid; place-items: center;
+      box-shadow: 0 8px 20px color-mix(in oklab, var(--accent-hover), transparent 55%), var(--elev-raised);
+      z-index: 25;
+      transition: transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+    }
+    .fab:hover { background: var(--accent-hover); }
+    .fab:active { transform: scale(0.94); }
+    .fab svg { width: 26px; height: 26px; stroke: currentColor; stroke-width: 2.4; fill: none; stroke-linecap: round; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       CARDS / LISTS
+       ════════════════════════════════════════════════════════════════════ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    /* Event card */
+    .event-card {
+      display: block; width: 100%; text-align: left;
+      padding: 14px 15px; margin-bottom: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+    .event-card:hover { border-color: var(--fg); }
+    .event-card:active { transform: scale(0.992); }
+    .event-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .event-card h3 { font-size: var(--text-lg); font-weight: 600; }
+    .event-budget-tag {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+      padding: 3px 8px; border-radius: var(--radius-sm);
+      background: var(--surface-warm); color: var(--fg);
+    }
+    .event-meta { display: flex; gap: 14px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .event-meta b { color: var(--fg-2); font-weight: 600; }
+    .progress { margin-top: 11px; }
+    .progress-track { height: 6px; border-radius: var(--radius-pill); background: var(--border-soft); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--fg); }
+    .progress-fill.over { background: var(--danger); }
+    .progress-row { display: flex; justify-content: space-between; margin-top: 5px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .progress-row .over-txt { color: var(--danger); font-weight: 600; }
+
+    /* Activity row */
+    .act-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
+      width: 100%; text-align: left;
+      padding: 12px 14px; margin-bottom: 8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      transition: border-color var(--motion-fast) var(--ease-standard);
+    }
+    .act-row:hover { border-color: var(--fg); }
+    .act-name { font-weight: 600; font-size: var(--text-base); display: flex; align-items: center; gap: 8px; }
+    .act-price { font-family: var(--font-mono); font-weight: 600; font-size: var(--text-base); white-space: nowrap; }
+    .act-sub { grid-column: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+    .chip {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+      padding: 2px 7px; border-radius: var(--radius-sm); line-height: 1.5;
+    }
+    .chip-paid { background: color-mix(in oklab, var(--cat-green) 14%, white); color: var(--cat-green); }
+    .chip-event { background: var(--border-soft); color: var(--fg-2); }
+    .act-edited { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Avatars */
+    .avatar {
+      width: 24px; height: 24px; border-radius: var(--radius-pill);
+      display: grid; place-items: center;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      flex: 0 0 auto;
+    }
+    .av-0 { background: color-mix(in oklab, var(--cat-blue) 15%, white); color: var(--cat-blue); }
+    .av-1 { background: color-mix(in oklab, var(--cat-green) 15%, white); color: var(--cat-green); }
+    .av-2 { background: color-mix(in oklab, var(--cat-purple) 15%, white); color: var(--cat-purple); }
+    .av-3 { background: color-mix(in oklab, var(--cat-pink) 15%, white); color: var(--cat-pink); }
+    .av-4 { background: color-mix(in oklab, var(--cat-orange) 15%, white); color: var(--cat-orange); }
+    .av-5 { background: color-mix(in oklab, var(--cat-blue) 12%, white); color: var(--cat-blue); }
+
+    /* ════════════════════════════════════════════════════════════════════
+       EMPTY STATE
+       ════════════════════════════════════════════════════════════════════ */
+    .empty { text-align: center; padding: 56px 24px 24px; }
+    .empty-badge {
+      width: 72px; height: 72px; margin: 0 auto 18px;
+      border-radius: 20px; background: var(--accent);
+      display: grid; place-items: center; font-size: 40px; line-height: 1;
+    }
+    .empty h3 { font-size: var(--text-xl); font-weight: 600; }
+    .empty p { color: var(--muted); font-size: var(--text-sm); margin-top: 6px; max-width: 30ch; margin-inline: auto; }
+    .empty .btn { margin-top: 18px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       BUTTONS
+       ════════════════════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.01em;
+      transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--fg); color: var(--surface); }
+    .btn-primary:hover { background: var(--fg-2); }
+    .btn-yellow { background: var(--accent); color: var(--accent-on); }
+    .btn-yellow:hover { background: var(--accent-hover); }
+    .btn-secondary { background: var(--surface); color: var(--fg); border-color: var(--border); }
+    .btn-secondary:hover { border-color: var(--fg); }
+    .btn-ghost { background: transparent; color: var(--fg-2); }
+    .btn-ghost:hover { color: var(--fg); }
+    .btn-danger { background: transparent; color: var(--danger); border-color: color-mix(in oklab, var(--danger) 30%, transparent); }
+    .btn-danger:hover { background: color-mix(in oklab, var(--danger) 8%, white); }
+    .btn-block { display: flex; width: 100%; }
+    .btn-sm { padding: 8px 12px; font-size: 12px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       FORMS
+       ════════════════════════════════════════════════════════════════════ */
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--muted); }
+    .field label .req { color: var(--danger); }
+    .input, .select {
+      width: 100%; padding: 12px 13px;
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      background: var(--surface); color: var(--fg);
+      font-size: var(--text-base);
+      transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+    }
+    .input:focus, .select:focus { outline: none; border-color: var(--fg); box-shadow: var(--focus-ring); }
+    .input.amount { font-family: var(--font-mono); font-weight: 600; }
+    .amount-wrap { position: relative; }
+    .amount-wrap .cur { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-weight: 600; color: var(--muted); }
+    .amount-wrap .input { padding-left: 30px; }
+    .field-hint { font-size: 11px; color: var(--muted); }
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* Inline add-participant row */
+    .add-pax { display: flex; gap: 8px; margin-bottom: 12px; }
+    .add-pax .input { flex: 1 1 auto; }
+    .add-pax .btn { flex: 0 0 auto; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       EVENT DETAIL
+       ════════════════════════════════════════════════════════════════════ */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .stat-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 11px 12px; }
+    .stat-cell .lbl { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .stat-cell .val { font-family: var(--font-mono); font-weight: 600; font-size: var(--text-lg); margin-top: 3px; }
+    .stat-cell .val.warn { color: var(--danger); }
+
+    .pax-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 11px; align-items: center; padding: 11px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 7px; }
+    .pax-row .nm { font-weight: 600; font-size: var(--text-base); }
+    .pax-row .sub { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .pax-row .bal { font-family: var(--font-mono); font-weight: 600; font-size: var(--text-base); text-align: right; }
+    .bal.pos { color: var(--success); }
+    .bal.neg { color: var(--danger); }
+    .bal.zero { color: var(--muted); }
+    .pax-remove { width: 22px; height: 22px; border-radius: var(--radius-sm); display: grid; place-items: center; color: var(--muted); }
+    .pax-remove:hover { color: var(--danger); background: color-mix(in oklab, var(--danger) 8%, white); }
+    .pax-remove svg { width: 14px; height: 14px; }
+
+    .section-label { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 9px; }
+    .section-label .eyebrow { font-size: 11px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       PAYMENT / RECEIPT
+       ════════════════════════════════════════════════════════════════════ */
+    .receipt {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+    }
+    .receipt-strip { height: 5px; background: var(--accent); }
+    .receipt-body { padding: 18px 18px 4px; }
+    .receipt-head { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+    .receipt-head .r-brand { font-family: var(--font-mono); font-weight: 600; font-size: var(--text-xl); letter-spacing: 0.02em; }
+    .receipt-head .r-emoji { font-size: 22px; }
+    .receipt-head .r-title { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .receipt-head .r-date { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .r-line { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono); font-size: 13px; padding: 4px 0; }
+    .r-line .k { color: var(--muted); }
+    .r-line .v { font-weight: 600; }
+    .r-divider { border: 0; border-top: 1px dashed var(--border); margin: 10px 0; }
+    .r-section-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg); margin: 4px 0 6px; font-weight: 600; }
+
+    .r-member { display: grid; grid-template-columns: 22px 1fr auto; gap: 9px; align-items: center; padding: 7px 0; font-family: var(--font-mono); font-size: 12.5px; border-bottom: 1px dashed var(--border-soft); }
+    .r-member:last-child { border-bottom: 0; }
+    .r-member .nm { font-weight: 600; }
+    .r-member .det { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .r-member .bal { font-weight: 600; font-size: 13px; }
+
+    .receipt-foot { text-align: center; padding: 12px 18px 16px; }
+    .receipt-foot .r-thanks { font-family: var(--font-mono); font-size: 12px; color: var(--fg); font-weight: 600; }
+    .receipt-foot .r-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+    /* torn bottom edge */
+    .receipt-tear { height: 9px; background: var(--surface); -webkit-mask: radial-gradient(5px 5px at 5px -1px, var(--fg) 99%, transparent 100%) repeat-x; -webkit-mask-size: 10px 9px; mask: radial-gradient(5px 5px at 5px -1px, var(--fg) 99%, transparent 100%) repeat-x; mask-size: 10px 9px; border-top: 1px dashed var(--border); }
+
+    .receipt-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+    .pay-event-card { display: flex; align-items: center; gap: 12px; width:100%; text-align:left; padding: 14px 15px; margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); transition: border-color var(--motion-fast) var(--ease-standard); }
+    .pay-event-card:hover { border-color: var(--fg); }
+    .pay-event-card .ri { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--surface-warm); display: grid; place-items: center; flex: 0 0 auto; }
+    .pay-event-card .ri svg { width: 20px; height: 20px; stroke: var(--fg); fill: none; stroke-width: 1.7; }
+    .pay-event-card .rt { flex: 1; min-width: 0; }
+    .pay-event-card .rt h3 { font-size: var(--text-base); font-weight: 600; }
+    .pay-event-card .rt p { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pay-event-card .chev { color: var(--muted); }
+    .pay-event-card.is-settled { border-color: color-mix(in oklab, var(--success) 38%, var(--border)); background: color-mix(in oklab, var(--success) 4%, var(--surface)); }
+    .pay-event-card .ri-done { background: color-mix(in oklab, var(--success) 16%, white); }
+    .pay-event-card .ri-done svg { stroke: var(--success); }
+
+    /* payment · expense picker */
+    .pay-progress { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 13px 14px; margin-bottom: 14px; }
+    .pay-progress-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .pay-progress .pp-label { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; }
+    .pay-progress .pp-val { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .pay-progress .pp-pct { font-family: var(--font-mono); font-weight: 600; font-size: 15px; color: var(--fg); }
+    .pay-progress .pp-pct.done { color: var(--success); }
+    .pay-progress .progress-track { margin-top: 10px; }
+    .progress-fill.done { background: var(--success); }
+    .pay-act.is-settled { background: color-mix(in oklab, var(--success) 4%, var(--surface)); border-color: color-mix(in oklab, var(--success) 30%, var(--border)); }
+    .pay-act.is-settled .act-name > span:nth-child(2) { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--muted) 55%, transparent); }
+    .pay-act.is-settled .act-price { color: var(--muted); }
+
+    /* per-expense receipt extras */
+    .receipt-done .receipt-strip { background: var(--success); }
+    .receipt-head .r-activity { font-family: var(--font-body); font-size: var(--text-lg); font-weight: 600; color: var(--fg); margin-top: 4px; }
+    .receipt-head .r-settled { display: inline-flex; align-items: center; gap: 5px; margin-top: 11px; padding: 4px 10px; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--success) 14%, white); color: var(--success); font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+    .receipt-head .r-settled svg { width: 13px; height: 13px; stroke: var(--success); }
+    .r-paidby .v { display: inline-flex; align-items: center; }
+    .r-line.r-total { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+    .r-line .r-big { font-size: 16px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       SHEETS / OVERLAYS
+       ════════════════════════════════════════════════════════════════════ */
+    .overlay { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg); }
+    .overlay.hidden { display: none; }
+    .sheet-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: var(--surface); border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+    .sheet-head h3 { font-size: var(--text-base); font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sheet-body { flex: 1 1 auto; overflow-y: auto; padding: 18px 16px calc(24px + env(safe-area-inset-bottom)); }
+    .sheet-foot { flex: 0 0 auto; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+    /* Menu popover */
+    .menu-pop { position: absolute; top: calc(50px + env(safe-area-inset-top)); right: 12px; z-index: 45; min-width: 190px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elev-raised), 0 8px 24px color-mix(in oklab, var(--fg), transparent 88%); padding: 6px; }
+    .menu-pop.hidden { display: none; }
+    .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 11px; border-radius: var(--radius-sm); font-size: 14px; color: var(--fg-2); }
+    .menu-item:hover { background: var(--border-soft); color: var(--fg); }
+    .menu-item.danger { color: var(--danger); }
+    .menu-item svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+
+    /* Toast */
+    .toast { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); z-index: 60; background: var(--fg); color: var(--surface); font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; padding: 9px 14px; border-radius: var(--radius-pill); box-shadow: var(--elev-raised); opacity: 0; pointer-events: none; transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-standard); white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .hint-card { background: var(--surface-warm); border: 1px solid color-mix(in oklab, var(--accent) 45%, white); border-radius: var(--radius-md); padding: 11px 13px; font-size: 12.5px; color: var(--fg-2); margin-bottom: 14px; display: flex; gap: 9px; align-items: flex-start; }
+    .hint-card .h-emoji { font-size: 15px; line-height: 1.4; }
+    .muted-block { color: var(--muted); font-size: 13px; }
+    .divider-rule { height: 1px; background: var(--border); margin: 16px 0; border: 0; }
+    .about-logo { font-family: var(--font-mono); font-size: 28px; font-weight: 600; letter-spacing: 0.02em; }
+    .about-list { font-size: 13.5px; color: var(--fg-2); line-height: 1.7; }
+    .about-list li { margin-bottom: 6px; }
+    .about-list code { font-family: var(--font-mono); font-size: 12px; background: var(--border-soft); padding: 1px 5px; border-radius: var(--radius-sm); }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ─── App bar ─────────────────────────────────────────────── -->
+    <header class="appbar" id="appbar"><!-- rendered --></header>
+
+    <!-- ─── Scrollable content ──────────────────────────────────── -->
+    <main class="content" id="content"><!-- rendered --></main>
+
+    <!-- ─── FAB ─────────────────────────────────────────────────── -->
+    <button class="fab" id="fab" data-act="fab" aria-label="Add">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+
+    <!-- ─── Tab bar ─────────────────────────────────────────────── -->
+    <nav class="tabbar" id="tabbar"><!-- rendered --></nav>
+
+    <!-- ─── Overlay (sheets, detail, receipt) ───────────────────── -->
+    <div class="overlay hidden" id="overlay"></div>
+
+    <!-- ─── Menu popover ────────────────────────────────────────── -->
+    <div class="menu-pop hidden" id="menu"></div>
+
+    <!-- ─── Toast ───────────────────────────────────────────────── -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+"use strict";
+/* ════════════════════════════════════════════════════════════════════
+   KKB — data + logic
+   ════════════════════════════════════════════════════════════════════ */
+const STORE_KEY = "kkb.store.v1";
+const VIEW_KEY  = "kkb.view.v1";
+
+/* ── Realistic seed: a Boracay getaway + a Tagaytay roadtrip ─────── */
+function seedData() {
+  const now = Date.now();
+  const iso = (d) => new Date(d).toISOString();
+  return {
+    events: [
+      { id: "e1", title: "Boracay Getaway", budget: 24000,
+        createdAt: iso("2026-06-05T20:00:00"),
+        participants: [
+          { id: "p1", name: "Mika" },
+          { id: "p2", name: "Jomar" },
+          { id: "p3", name: "Andrea" },
+          { id: "p4", name: "Paolo" },
+        ] },
+      { id: "e2", title: "Tagaytay Roadtrip", budget: 6000,
+        createdAt: iso("2026-05-29T19:00:00"),
+        participants: [
+          { id: "p5", name: "Mika" },
+          { id: "p6", name: "Jomar" },
+          { id: "p7", name: "Lia" },
+        ] },
+    ],
+    activities: [
+      { id: "a1", eventId: "e1", name: "Beachfront Resort (2 nights)", price: 8000, paidById: "p1", paidByName: "Mika", createdAt: iso("2026-06-06T14:00:00"), updatedAt: iso("2026-06-06T14:05:00") },
+      { id: "a2", eventId: "e1", name: "Island Hopping Tour", price: 3600, paidById: "p2", paidByName: "Jomar", createdAt: iso("2026-06-07T08:30:00"), updatedAt: iso("2026-06-07T08:30:00") },
+      { id: "a3", eventId: "e1", name: "Tricycles & Transpo", price: 1200, paidById: "p4", paidByName: "Paolo", createdAt: iso("2026-06-07T09:10:00"), updatedAt: iso("2026-06-07T09:10:00") },
+      { id: "a4", eventId: "e1", name: "Dinner — Real Coffee & Tea", price: 2400, paidById: "p3", paidByName: "Andrea", createdAt: iso("2026-06-07T20:10:00"), updatedAt: iso("2026-06-07T20:45:00") },
+      { id: "a5", eventId: "e1", name: "Parasailing (2 pax)", price: 5000, paidById: "p1", paidByName: "Mika", createdAt: iso("2026-06-08T11:00:00"), updatedAt: iso("2026-06-08T11:00:00") },
+      { id: "a6", eventId: "e1", name: "Sunset Bar Tab", price: 2800, paidById: "p2", paidByName: "Jomar", createdAt: iso("2026-06-08T18:45:00"), updatedAt: iso("2026-06-08T19:02:00") },
+      { id: "a7", eventId: "e2", name: "Gas & SLEX Toll", price: 1500, paidById: "p6", paidByName: "Jomar", createdAt: iso("2026-06-01T07:00:00"), updatedAt: iso("2026-06-01T07:00:00") },
+      { id: "a8", eventId: "e2", name: "Bulalohan Lunch", price: 1800, paidById: "p5", paidByName: "Mika", createdAt: iso("2026-06-01T13:00:00"), updatedAt: iso("2026-06-01T13:00:00") },
+      { id: "a9", eventId: "e2", name: "Coffee — Bag of Beans", price: 900, paidById: "p7", paidByName: "Lia", createdAt: iso("2026-06-01T16:00:00"), updatedAt: iso("2026-06-01T16:00:00") },
+    ],
+    created: now,
+  };
+}
+
+let store = load();
+let view = loadView(); // { tab, sub:{type,id}|null, sheet:{type,id}|null, menu:false }
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      // migration: ensure every activity has a `settled` flag (per-expense settlement)
+      (s.activities || []).forEach(a => { if (typeof a.settled !== "boolean") a.settled = false; });
+      return s;
+    }
+  } catch (e) {}
+  const s = seedData();
+  localStorage.setItem(STORE_KEY, JSON.stringify(s));
+  return s;
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function loadView() {
+  try {
+    const raw = localStorage.getItem(VIEW_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { tab: "events", sub: null, sheet: null, menu: false };
+}
+function saveView() { localStorage.setItem(VIEW_KEY, JSON.stringify(view)); }
+
+/* ── helpers ─────────────────────────────────────────────────────── */
+const fmt = new Intl.NumberFormat("en-PH", { maximumFractionDigits: 0 });
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+
+function peso(n) { const r = Math.round(n); return "₱" + fmt.format(Math.abs(r)); }
+function pesoSigned(n) {
+  const r = Math.round(n);
+  const sign = r > 0 ? "+" : r < 0 ? "−" : "";
+  return sign + "₱" + fmt.format(Math.abs(r));
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+}
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" }) +
+    " · " + d.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
+}
+function initials(name) {
+  const parts = String(name || "?").trim().split(/\s+/);
+  return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+}
+function avIndex(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return h % 6;
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+function eventById(id) { return store.events.find(e => e.id === id) || null; }
+function activitiesFor(eventId) { return store.activities.filter(a => a.eventId === eventId); }
+function allActivities() { return store.activities.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); }
+
+/* ── settlement math ─────────────────────────────────────────────── */
+// Tally any list of activities against an event's participants.
+function tally(acts, participants) {
+  const total = acts.reduce((s, a) => s + Number(a.price || 0), 0);
+  const n = participants.length;
+  const share = n > 0 ? total / n : 0;
+  const paidBy = {};
+  participants.forEach(p => paidBy[p.id] = 0);
+  acts.forEach(a => { if (paidBy[a.paidById] != null) paidBy[a.paidById] += Number(a.price || 0); });
+  const rows = participants.map(p => {
+    const paid = paidBy[p.id];
+    return { id: p.id, name: p.name, paid, share, balance: paid - share };
+  });
+  return { total, n, share, rows };
+}
+// Full trip picture — every expense, regardless of settlement.
+function calcEvent(ev) {
+  const acts = activitiesFor(ev.id);
+  return Object.assign({ acts }, tally(acts, ev.participants));
+}
+// Outstanding picture — only UNSETTLED expenses (what people still owe).
+function calcOutstanding(ev) {
+  const acts = activitiesFor(ev.id).filter(a => !a.settled);
+  return Object.assign({ acts }, tally(acts, ev.participants));
+}
+// Per-expense breakdown: who paid, and what each other member owes them.
+function calcActivity(a, ev) {
+  const total = Number(a.price || 0);
+  const n = ev.participants.length;
+  const share = n > 0 ? total / n : 0;
+  const payer = ev.participants.find(p => p.id === a.paidById) || null;
+  const others = ev.participants.filter(p => p.id !== a.paidById);
+  return { total, n, share, payer, others };
+}
+// Event is settled when it has at least one expense and every one is settled.
+function isEventSettled(ev) {
+  const acts = activitiesFor(ev.id);
+  return acts.length > 0 && acts.every(a => a.settled);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════════════════════════════════ */
+const ICON = {
+  events: '<svg viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
+  activities: '<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5"/></svg>',
+  payment: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2.2-1.3-2 1.3-1.8-1.3L9.8 21 8 19.7 6 21V3Z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  receipt: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2.2-1.3-2 1.3-1.8-1.3L9.8 21 8 19.7 6 21V3Z"/><path d="M9 8.5h6M9 12h4"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>',
+  back: '<svg class="back-arrow" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16M4 20v-4h4"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>',
+};
+
+function render() {
+  renderAppbar();
+  renderContent();
+  renderTabbar();
+  renderFab();
+  renderOverlay();
+  renderMenu();
+  saveView();
+}
+
+/* ── app bar ─────────────────────────────────────────────────────── */
+function renderAppbar() {
+  const el = document.getElementById("appbar");
+  let title = "Welcome to KKB", sub = "Split trips, stay friends", left = "", right = "";
+
+  if (view.sub) {
+    if (view.sub.type === "detail") {
+      const ev = eventById(view.sub.id);
+      title = ev ? ev.title : "Event"; sub = "Participants & balances";
+      left = `<button class="icon-btn" data-act="back" aria-label="Back">${ICON.back}</button>`;
+      right = `<button class="icon-btn" data-act="open-menu" aria-label="More">${ICON.more}</button>`;
+    } else if (view.sub.type === "pay-event") {
+      const ev = eventById(view.sub.id);
+      title = ev ? ev.title : "Settle up"; sub = "Pick an expense to settle";
+      left = `<button class="icon-btn" data-act="back" aria-label="Back">${ICON.back}</button>`;
+      right = `<button class="icon-btn" data-act="open-menu" aria-label="More">${ICON.more}</button>`;
+    } else if (view.sub.type === "pay-activity") {
+      const ev = eventById(view.sub.eventId);
+      title = ev ? ev.title : "Settle"; sub = "Receipt to screenshot & share";
+      left = `<button class="icon-btn" data-act="back" aria-label="Back">${ICON.back}</button>`;
+      right = `<button class="icon-btn" data-act="copy-summary" data-id="${view.sub.activityId}" aria-label="Copy">${ICON.copy}</button>`;
+    }
+  } else {
+    right = `<button class="icon-btn" data-act="open-menu" aria-label="More">${ICON.more}</button>`;
+  }
+
+  el.innerHTML = `
+    <div class="appbar-row">
+      ${left}
+      <span class="brand-badge">🤗</span>
+      <div class="appbar-titles">
+        <div class="appbar-title">${esc(title)}</div>
+        <div class="appbar-sub">${esc(sub)}</div>
+      </div>
+      ${right}
+    </div>`;
+}
+
+/* ── tab bar ─────────────────────────────────────────────────────── */
+function renderTabbar() {
+  const tabs = [
+    { id: "activities", label: "Activities", icon: ICON.activities },
+    { id: "events", label: "Events", icon: ICON.events },
+    { id: "payment", label: "Payment", icon: ICON.payment },
+  ];
+  document.getElementById("tabbar").innerHTML = tabs.map(t => `
+    <button class="tab ${view.tab === t.id && !view.sub ? "active" : ""}" data-act="tab" data-tab="${t.id}">
+      ${t.icon}<span class="tab-label">${t.label}</span>
+    </button>`).join("");
+}
+
+/* ── FAB ─────────────────────────────────────────────────────────── */
+function renderFab() {
+  const fab = document.getElementById("fab");
+  // Events home always; Activities only once an event exists. No sub-screen or sheet open.
+  const show = !view.sub && !view.sheet && (view.tab === "events" || (view.tab === "activities" && store.events.length));
+  fab.style.display = show ? "grid" : "none";
+}
+
+/* ── main content router ─────────────────────────────────────────── */
+function renderContent() {
+  const el = document.getElementById("content");
+  if (view.tab === "events") el.innerHTML = viewEvents();
+  else if (view.tab === "activities") el.innerHTML = viewActivities();
+  else el.innerHTML = viewPayment();
+  el.scrollTop = 0;
+}
+
+/* ── EVENTS screen (home) ────────────────────────────────────────── */
+function viewEvents() {
+  if (!store.events.length) {
+    return `
+      <div class="screen">
+        <div class="empty">
+          <div class="empty-badge">🤗</div>
+          <h3>Welcome to KKB</h3>
+          <p>Track shared expenses, split them fairly, and settle up in seconds — even with no signal.</p>
+          <button class="btn btn-yellow" data-act="new-event">${ICON.plus} Create your first event</button>
+        </div>
+      </div>`;
+  }
+  const cards = store.events.map(ev => {
+    const c = calcEvent(ev);
+    const pct = ev.budget > 0 ? Math.min(100, Math.round(c.total / ev.budget * 100)) : 0;
+    const over = c.total > ev.budget;
+    const balClass = over ? "progress-fill over" : "progress-fill";
+    return `
+      <button class="event-card" data-act="open-event" data-id="${ev.id}">
+        <div class="event-card-top">
+          <div>
+            <h3>${esc(ev.title)}</h3>
+            <div class="eyebrow" style="margin-top:4px">${fmtDate(ev.createdAt)}</div>
+          </div>
+          <span class="event-budget-tag">Budget ${peso(ev.budget)}</span>
+        </div>
+        <div class="event-meta">
+          <span><b>${c.n}</b> pax</span>
+          <span><b>${c.acts.length}</b> activities</span>
+          <span>Spent <b>${peso(c.total)}</b></span>
+        </div>
+        <div class="progress">
+          <div class="progress-track"><div class="${balClass}" style="width:${pct}%"></div></div>
+          <div class="progress-row">
+            <span>${pct}% of budget</span>
+            <span class="${over ? "over-txt" : ""}">${over ? peso(c.total - ev.budget) + " over" : peso(ev.budget - c.total) + " left"}</span>
+          </div>
+        </div>
+      </button>`;
+  }).join("");
+
+  return `
+    <div class="screen">
+      <div class="screen-head">
+        <h2>Your trips</h2>
+        <p>Pick an event to manage participants or settle up.</p>
+      </div>
+      ${cards}
+    </div>`;
+}
+
+/* ── EVENT DETAIL (sub-screen) ───────────────────────────────────── */
+function viewEventDetail() {
+  const ev = eventById(view.sub.id);
+  if (!ev) { view.sub = null; return renderContent(); }
+  const c = calcEvent(ev);            // full trip picture (spent, share)
+  const co = calcOutstanding(ev);     // outstanding balances (unsettled only)
+  const over = c.total > ev.budget;
+  const allSettled = isEventSettled(ev);
+
+  const paxRows = ev.participants.map(p => {
+    const row = co.rows.find(r => r.id === p.id);
+    const bal = row ? row.balance : 0;
+    const paidAll = c.rows.find(r => r.id === p.id);
+    const cls = bal > 0.5 ? "pos" : bal < -0.5 ? "neg" : "zero";
+    const status = Math.abs(bal) < 0.5 ? "settled up" : (bal > 0 ? "is owed " + peso(bal) : "owes " + peso(-bal));
+    const canRemove = !activitiesFor(ev.id).some(a => a.paidById === p.id);
+    return `
+      <div class="pax-row">
+        <span class="avatar av-${avIndex(p.name)}">${esc(initials(p.name))}</span>
+        <div>
+          <div class="nm">${esc(p.name)}</div>
+          <div class="sub">paid ${peso(paidAll ? paidAll.paid : 0)} · ${status}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="bal ${cls}">${pesoSigned(bal)}</span>
+          ${canRemove ? `<button class="pax-remove" data-act="remove-pax" data-id="${p.id}" aria-label="Remove">${ICON.x}</button>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+
+  const noPax = !ev.participants.length;
+
+  return `
+    <div class="screen">
+      <div class="summary-grid">
+        <div class="stat-cell"><div class="lbl">Budget</div><div class="val">${peso(ev.budget)}</div></div>
+        <div class="stat-cell"><div class="lbl">Spent</div><div class="val">${peso(c.total)}</div></div>
+        <div class="stat-cell"><div class="lbl">Share / pax</div><div class="val ${over ? "warn" : ""}">${c.n ? peso(c.share) : "—"}</div></div>
+      </div>
+
+      ${noPax ? `<div class="hint-card"><span class="h-emoji">👋</span><span>No participants yet. Add everyone below — the budget splits equally once you're done.</span></div>` : ""}
+
+      <div class="section-label">
+        <span class="eyebrow">Add participants</span>
+        ${ev.participants.length ? `<span class="eyebrow">${ev.participants.length} added</span>` : ""}
+      </div>
+      <div class="add-pax">
+        <input class="input" id="pax-name" placeholder="Name (keeps adding until Finish)" autocomplete="off" />
+        <button class="btn btn-secondary btn-sm" data-act="add-pax">Add</button>
+        <button class="btn btn-yellow btn-sm" data-act="finish-pax">Finish</button>
+      </div>
+
+      ${ev.participants.length ? `
+        <div class="section-label"><span class="eyebrow">Participants &amp; balances</span></div>
+        ${paxRows}
+        <p class="muted-block" style="font-size:12px;margin-top:8px">Outstanding balance across unsettled expenses. Positive = owed money, negative = owes.${allSettled ? " Everyone's settled up ✅" : ""}</p>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" data-act="new-activity-pre" data-event="${ev.id}">+ Add an expense</button>
+          <button class="btn btn-yellow btn-sm" data-act="pay-event-tab" data-id="${ev.id}">Settle up →</button>
+        </div>
+      ` : ""}
+
+      <hr class="divider-rule" />
+      <button class="btn btn-danger btn-sm" data-act="delete-event" data-id="${ev.id}">${ICON.trash} Delete event</button>
+    </div>`;
+}
+
+/* ── ACTIVITIES screen ───────────────────────────────────────────── */
+function viewActivities() {
+  const acts = allActivities();
+  if (!store.events.length) {
+    return `<div class="screen"><div class="empty"><div class="empty-badge">📋</div><h3>No activities yet</h3><p>Create an event first — activities belong to a trip.</p><button class="btn btn-yellow" data-act="tab" data-tab="events">Go to Events</button></div></div>`;
+  }
+  if (!acts.length) {
+    return `<div class="screen"><div class="empty"><div class="empty-badge">📋</div><h3>Log your first expense</h3><p>Who paid, for what, and how much. KKB tracks the rest.</p><button class="btn btn-yellow" data-act="new-activity">${ICON.plus} Add activity</button></div></div>`;
+  }
+  const rows = acts.map(a => {
+    const ev = eventById(a.eventId);
+    return `
+      <button class="act-row" data-act="edit-activity" data-id="${a.id}">
+        <span class="act-name">
+          <span class="avatar av-${avIndex(a.paidByName)}">${esc(initials(a.paidByName))}</span>
+          ${esc(a.name)}
+        </span>
+        <span class="act-price">${peso(a.price)}</span>
+        <span class="act-sub">
+          <span class="chip chip-paid">paid · ${esc(a.paidByName)}</span>
+          ${ev ? `<span class="chip chip-event">${esc(ev.title)}</span>` : ""}
+        </span>
+        <span class="act-edited">${fmtDate(a.createdAt)}${a.updatedAt && a.updatedAt !== a.createdAt ? " · edited " + fmtDate(a.updatedAt) : ""}</span>
+      </button>`;
+  }).join("");
+  return `
+    <div class="screen">
+      <div class="screen-head">
+        <h2>Activities</h2>
+        <p>Every expense, who paid, and when. Tap to edit.</p>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+/* ── PAYMENT screen ──────────────────────────────────────────────── */
+function viewPayment() {
+  if (!store.events.length) {
+    return `<div class="screen"><div class="empty"><div class="empty-badge">🧾</div><h3>Nothing to settle yet</h3><p>Once a trip has expenses, generate a receipt everyone can screenshot.</p><button class="btn btn-yellow" data-act="tab" data-tab="events">Create an event</button></div></div>`;
+  }
+  const cards = store.events.map(ev => {
+    const c = calcEvent(ev);
+    const acts = activitiesFor(ev.id);
+    const settledCount = acts.filter(a => a.settled).length;
+    const allSettled = isEventSettled(ev);
+    const summary = acts.length
+      ? (allSettled ? `All settled · ${peso(c.total)} spent · ${c.n} pax`
+                    : `${settledCount}/${acts.length} settled · ${peso(c.total)} spent · ${c.n} pax`)
+      : `${c.n} pax · no expenses yet`;
+    return `
+      <button class="pay-event-card ${allSettled ? "is-settled" : ""}" data-act="open-pay-event" data-id="${ev.id}">
+        <span class="ri ${allSettled ? "ri-done" : ""}">${allSettled ? ICON.check : ICON.receipt}</span>
+        <span class="rt">
+          <h3>${esc(ev.title)}</h3>
+          <p>${summary}</p>
+        </span>
+        <span class="chev">${ICON.chev}</span>
+      </button>`;
+  }).join("");
+  return `
+    <div class="screen">
+      <div class="screen-head">
+        <h2>Settle up</h2>
+        <p>Pick a trip to generate a receipt everyone can screenshot and share.</p>
+      </div>
+      ${cards}
+    </div>`;
+}
+
+/* ── PAYMENT · expense picker (sub-screen) ──────────────────────── */
+function viewPayEvent() {
+  const ev = eventById(view.sub.id);
+  if (!ev) { view.sub = null; return ""; }
+  const acts = activitiesFor(ev.id).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const c = calcEvent(ev);
+  const settledCount = acts.filter(a => a.settled).length;
+  const allSettled = isEventSettled(ev);
+  const pct = acts.length ? Math.round(settledCount / acts.length * 100) : 0;
+
+  const rows = acts.map(a => {
+    const ac = calcActivity(a, ev);
+    const each = ac.n > 0 ? peso(ac.share) : "—";
+    return `
+      <button class="act-row pay-act ${a.settled ? "is-settled" : ""}" data-act="open-pay-activity" data-id="${a.id}" data-event="${ev.id}">
+        <span class="act-name">
+          <span class="avatar av-${avIndex(a.paidByName)}">${esc(initials(a.paidByName))}</span>
+          <span>${esc(a.name)}</span>
+          ${a.settled ? `<span class="chip chip-paid">settled</span>` : ""}
+        </span>
+        <span class="act-price">${peso(a.price)}</span>
+        <span class="act-sub">
+          <span class="chip chip-paid">paid · ${esc(a.paidByName)}</span>
+          ${ac.others.length ? `<span>${ac.others.length} owe ${each} each</span>` : `<span>solo expense</span>`}
+        </span>
+        <span class="act-edited">${a.settled ? "settled " + fmtDate(a.updatedAt || a.createdAt) : "tap to settle →"}</span>
+      </button>`;
+  }).join("");
+
+  return `
+    <div class="screen">
+      <div class="pay-progress">
+        <div class="pay-progress-top">
+          <div>
+            <div class="pp-label">${esc(ev.title)}</div>
+            <div class="pp-val">${settledCount} of ${acts.length} settled · ${peso(c.total)} total</div>
+          </div>
+          <div class="pp-pct ${allSettled ? "done" : ""}">${pct}%</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill ${allSettled ? "done" : ""}" style="width:${pct}%"></div></div>
+      </div>
+
+      ${allSettled ? `<div class="hint-card"><span class="h-emoji">✅</span><span>Everyone's square on <b>${esc(ev.title)}</b>. Tap any expense to reopen its receipt, or mark one unpaid.</span></div>` : ""}
+
+      ${acts.length ? rows : `<div class="empty" style="padding:24px 0"><div class="empty-badge">🧾</div><h3>No expenses yet</h3><p>Log expenses on the Activities tab before settling up.</p><button class="btn btn-yellow" data-act="tab" data-tab="activities">Go to Activities</button></div>`}
+    </div>`;
+}
+
+/* ── PAYMENT · per-expense receipt (sub-screen) ─────────────────── */
+function viewPayActivity() {
+  const ev = eventById(view.sub.eventId);
+  const a = store.activities.find(x => x.id === view.sub.activityId);
+  if (!ev || !a) { view.sub = null; return ""; }
+  const ac = calcActivity(a, ev);
+  const payerName = ac.payer ? ac.payer.name : "—";
+
+  const dueRows = ac.others.map(p => `
+    <div class="r-member">
+      <span class="avatar av-${avIndex(p.name)}" style="width:20px;height:20px;font-size:10px">${esc(initials(p.name))}</span>
+      <div>
+        <div class="nm">${esc(p.name)}</div>
+        <div class="det">owes ${esc(payerName)}</div>
+      </div>
+      <span class="bal">${peso(ac.share)}</span>
+    </div>`).join("");
+  const collectTotal = ac.others.length * ac.share;
+
+  return `
+    <div class="screen">
+      <div class="receipt ${a.settled ? "receipt-done" : ""}">
+        <div class="receipt-strip"></div>
+        <div class="receipt-body">
+          <div class="receipt-head">
+            <div class="r-brand">🤗 KKB</div>
+            <div class="r-title">${esc(ev.title)}</div>
+            <div class="r-activity">${esc(a.name)}</div>
+            <div class="r-date">${fmtDateTime(a.createdAt)}${a.updatedAt && a.updatedAt !== a.createdAt ? " · edited " + fmtDate(a.updatedAt) : ""}</div>
+            ${a.settled ? `<div class="r-settled">${ICON.check} Settled</div>` : ""}
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="r-line r-paidby"><span class="k">Paid by</span><span class="v"><span class="avatar av-${avIndex(payerName)}" style="width:18px;height:18px;font-size:9px;margin-right:6px">${esc(initials(payerName))}</span>${esc(payerName)}</span></div>
+            <div class="r-line"><span class="k">Total expense</span><span class="v r-big">${peso(ac.total)}</span></div>
+            <div class="r-line"><span class="k">Split between</span><span class="v">${ac.n} ${ac.n === 1 ? "person" : "people"}</span></div>
+            <div class="r-line"><span class="k">Each pays</span><span class="v">${ac.n ? peso(ac.share) : "—"}</span></div>
+          </div>
+
+          ${ac.others.length ? `
+            <hr class="r-divider" />
+            <div class="r-section-title">${esc(payerName)} collects</div>
+            ${dueRows}
+            <div class="r-line r-total"><span class="k">Total to collect</span><span class="v">${peso(collectTotal)}</span></div>
+            <p class="muted-block" style="font-size:11px;margin-top:6px">${esc(payerName)}'s own share is ${peso(ac.share)} — already covered, since they paid the full ${peso(ac.total)}.</p>
+          ` : `
+            <hr class="r-divider" />
+            <p class="muted-block" style="font-size:12px">Solo expense — only ${esc(payerName)} is in this event, so there's nothing to split.</p>
+          `}
+        </div>
+        <div class="receipt-foot">
+          <div class="r-thanks">${a.settled ? "All square on this one 🤗" : "Send this to the group 🤗"}</div>
+          <div class="r-meta">Generated by KKB · works offline · saved on this device</div>
+        </div>
+        <div class="receipt-tear"></div>
+      </div>
+
+      <div class="receipt-actions">
+        ${a.settled ? `
+          <button class="btn btn-secondary btn-block" data-act="unsettle-activity" data-id="${a.id}">Mark unpaid</button>
+          <button class="btn btn-ghost btn-block" data-act="copy-summary" data-id="${a.id}">${ICON.copy} Copy receipt text</button>
+        ` : `
+          <button class="btn btn-yellow btn-block" data-act="settle-activity" data-id="${a.id}">${ICON.check} Settle this expense</button>
+          <button class="btn btn-ghost btn-block" data-act="copy-summary" data-id="${a.id}">${ICON.copy} Copy receipt text</button>
+        `}
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   OVERLAY (sheets + pushed screens)
+   ════════════════════════════════════════════════════════════════════ */
+function renderOverlay() {
+  const el = document.getElementById("overlay");
+
+  // Sub-screens (detail / receipt) render in content, not overlay — keep overlay for sheets only.
+  if (view.sheet) {
+    el.classList.remove("hidden");
+    if (view.sheet.type === "new-event") el.innerHTML = sheetNewEvent();
+    else if (view.sheet.type === "activity") el.innerHTML = sheetActivity(view.sheet.id, view.sheet.eventId);
+    else if (view.sheet.type === "about") el.innerHTML = aboutHtml();
+    else el.classList.add("hidden");
+  } else {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+  }
+
+  // When a sub-screen is active, inject it into the content area
+  if (view.sub && !view.sheet) {
+    document.getElementById("content").innerHTML =
+      view.sub.type === "detail" ? viewEventDetail() :
+      view.sub.type === "pay-event" ? viewPayEvent() :
+      view.sub.type === "pay-activity" ? viewPayActivity() : "";
+    document.getElementById("content").scrollTop = 0;
+  }
+}
+
+/* ── sheet: new event ────────────────────────────────────────────── */
+function sheetNewEvent() {
+  return `
+    <div class="overlay">
+      <div class="sheet-head">
+        <button class="icon-btn" data-act="close-sheet" aria-label="Close">${ICON.close}</button>
+        <h3>New event</h3>
+      </div>
+      <form class="sheet-body" id="form-event">
+        <div class="field">
+          <label>Event title <span class="req">*</span></label>
+          <input class="input" name="title" placeholder="e.g. Palawan Escape" required autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Total budget <span class="req">*</span></label>
+          <div class="amount-wrap"><span class="cur">₱</span><input class="input amount" name="budget" type="number" inputmode="numeric" min="0" step="1" placeholder="0" required /></div>
+          <span class="field-hint">This is a planning target. You'll split actual spending equally later.</span>
+        </div>
+        <p class="muted-block" style="font-size:12.5px;margin-top:8px">After creating, tap the event to add participants and log expenses.</p>
+      </form>
+      <div class="sheet-foot">
+        <button class="btn btn-secondary btn-block" data-act="close-sheet">Cancel</button>
+        <button class="btn btn-yellow btn-block" data-act="save-event">Add event</button>
+      </div>
+    </div>`;
+}
+
+/* ── sheet: new / edit activity ──────────────────────────────────── */
+function sheetActivity(id, presetEventId) {
+  const editing = !!id;
+  const a = editing ? store.activities.find(x => x.id === id) : null;
+  const evOpts = store.events.map(e => `<option value="${e.id}" ${a && a.eventId === e.id || (!a && presetEventId === e.id) ? "selected" : ""}>${esc(e.title)}</option>`).join("");
+  const selEv = a ? a.eventId : (presetEventId || (store.events[0] && store.events[0].id));
+
+  function paidByOptions(evId) {
+    const ev = eventById(evId);
+    if (!ev || !ev.participants.length) return `<option value="">— add participants first —</option>`;
+    return ev.participants.map(p => `<option value="${p.id}" data-name="${esc(p.name)}" ${a && a.paidById === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  }
+
+  return `
+    <div class="overlay">
+      <div class="sheet-head">
+        <button class="icon-btn" data-act="close-sheet" aria-label="Close">${ICON.close}</button>
+        <h3>${editing ? "Edit activity" : "New activity"}</h3>
+        ${editing ? `<button class="icon-btn" data-act="delete-activity" data-id="${id}" aria-label="Delete" style="color:var(--danger)">${ICON.trash}</button>` : ""}
+      </div>
+      <form class="sheet-body" id="form-activity" data-id="${id || ""}">
+        <div class="field">
+          <label>What was it? <span class="req">*</span></label>
+          <input class="input" name="name" placeholder="e.g. Dinner at Real Coffee" value="${a ? esc(a.name) : ""}" required autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Price <span class="req">*</span></label>
+          <div class="amount-wrap"><span class="cur">₱</span><input class="input amount" name="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" value="${a ? a.price : ""}" required /></div>
+        </div>
+        <div class="field">
+          <label>Event <span class="req">*</span></label>
+          <select class="select" name="eventId" id="act-event">${evOpts}</select>
+        </div>
+        <div class="field">
+          <label>Paid by <span class="req">*</span></label>
+          <select class="select" name="paidById" id="act-paidby">${paidByOptions(selEv)}</select>
+        </div>
+        ${(!eventById(selEv) || !eventById(selEv).participants.length) ? `<div class="hint-card"><span class="h-emoji">💡</span><span>This event has no participants yet. Add them from the event screen so balances compute.</span></div>` : ""}
+      </form>
+      <div class="sheet-foot">
+        <button class="btn btn-secondary btn-block" data-act="close-sheet">Cancel</button>
+        <button class="btn btn-yellow btn-block" data-act="save-activity">${editing ? "Save changes" : "Add activity"}</button>
+      </div>
+    </div>`;
+}
+
+/* ── menu popover ────────────────────────────────────────────────── */
+function renderMenu() {
+  const el = document.getElementById("menu");
+  if (view.menu) {
+    el.classList.remove("hidden");
+    el.innerHTML = `
+      <button class="menu-item" data-act="about">${ICON.info} About KKB</button>
+      <button class="menu-item" data-act="reset-demo">${ICON.refresh} Reset demo data</button>`;
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ACTIONS
+   ════════════════════════════════════════════════════════════════════ */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 1900);
+}
+
+function setTab(tab) { view.tab = tab; view.sub = null; view.sheet = null; view.menu = false; render(); }
+function back() {
+  // From a per-expense receipt, step back to that event's expense list (not the landing).
+  if (view.sub && view.sub.type === "pay-activity") {
+    view.sub = { type: "pay-event", id: view.sub.eventId };
+  } else {
+    view.sub = null;
+  }
+  view.menu = false; render();
+}
+function openEvent(id) { view.sub = { type: "detail", id }; view.menu = false; render(); maybeFocusPax(); }
+function openPayEvent(id) { view.sub = { type: "pay-event", id }; view.menu = false; render(); }
+function goPayEvent(id) { view.tab = "payment"; view.sub = { type: "pay-event", id }; view.sheet = null; view.menu = false; render(); }
+function openPayActivity(eventId, activityId) { view.sub = { type: "pay-activity", eventId, activityId }; view.menu = false; render(); }
+
+function maybeFocusPax() {
+  setTimeout(() => { const i = document.getElementById("pax-name"); if (i) i.focus(); }, 60);
+}
+
+function addParticipant() {
+  const ev = eventById(view.sub.id);
+  const input = document.getElementById("pax-name");
+  if (!ev || !input) return;
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  ev.participants.push({ id: uid(), name });
+  input.value = "";
+  save();
+  renderContent_forDetail();
+  maybeFocusPax();
+  toast("Added " + name);
+}
+function finishPax() {
+  const input = document.getElementById("pax-name");
+  if (input && input.value.trim()) addParticipant();
+  toast("Participants saved");
+}
+function removePax(id) {
+  const ev = eventById(view.sub.id);
+  if (!ev) return;
+  ev.participants = ev.participants.filter(p => p.id !== id);
+  save();
+  renderContent_forDetail();
+}
+
+/* re-render only the detail content (keeps overlay state clean) */
+function renderContent_forDetail() {
+  if (view.sub && view.sub.type === "detail") {
+    document.getElementById("content").innerHTML = viewEventDetail();
+  } else {
+    render();
+  }
+}
+
+function saveEvent() {
+  const f = document.getElementById("form-event");
+  const title = f.title.value.trim();
+  const budget = Number(f.budget.value);
+  if (!title || !(budget >= 0)) { toast("Add a title and budget"); return; }
+  const ev = { id: uid(), title, budget, createdAt: new Date().toISOString(), participants: [] };
+  store.events.unshift(ev);
+  save();
+  view.sheet = null;
+  view.tab = "events";
+  view.sub = { type: "detail", id: ev.id };
+  render();
+  maybeFocusPax();
+  toast("Event created");
+}
+
+function openActivitySheet(id, presetEventId) {
+  view.sheet = { type: "activity", id: id || null, eventId: presetEventId || null };
+  view.menu = false;
+  render();
+}
+function saveActivity() {
+  const f = document.getElementById("form-activity");
+  const id = f.getAttribute("data-id");
+  const name = f.name.value.trim();
+  const price = Number(f.price.value);
+  const eventId = f.eventId.value;
+  const paidById = f.paidById.value;
+  const ev = eventById(eventId);
+  const p = ev && ev.participants.find(x => x.id === paidById);
+  if (!name || !(price >= 0) || !eventId || !p) { toast("Fill all fields"); return; }
+  const now = new Date().toISOString();
+  if (id) {
+    const a = store.activities.find(x => x.id === id);
+    a.name = name; a.price = price; a.eventId = eventId; a.paidById = paidById; a.paidByName = p.name; a.updatedAt = now;
+  } else {
+    store.activities.unshift({ id: uid(), name, price, eventId, paidById, paidByName: p.name, createdAt: now, updatedAt: now });
+  }
+  save();
+  view.sheet = null;
+  render();
+  toast(id ? "Activity updated" : "Activity added");
+}
+function deleteActivity(id) {
+  store.activities = store.activities.filter(a => a.id !== id);
+  save();
+  view.sheet = null;
+  render();
+  toast("Activity deleted");
+}
+function deleteEvent(id) {
+  if (!confirm("Delete this event and all its activities? This cannot be undone.")) return;
+  store.events = store.events.filter(e => e.id !== id);
+  store.activities = store.activities.filter(a => a.eventId !== id);
+  save();
+  view.sub = null;
+  render();
+  toast("Event deleted");
+}
+
+function copyActivitySummary(id) {
+  const a = store.activities.find(x => x.id === id);
+  const ev = a && eventById(a.eventId);
+  if (!a || !ev) return;
+  const ac = calcActivity(a, ev);
+  const payerName = ac.payer ? ac.payer.name : "—";
+  const lines = [];
+  lines.push("🤗 KKB — " + ev.title);
+  lines.push(a.name);
+  lines.push(fmtDateTime(a.createdAt));
+  lines.push("----------------------------------");
+  lines.push("Paid by:      " + payerName);
+  lines.push("Total:        " + peso(ac.total));
+  lines.push("Split between " + ac.n + (ac.n === 1 ? " person" : " people"));
+  lines.push("Each pays:    " + (ac.n ? peso(ac.share) : "—"));
+  if (ac.others.length) {
+    lines.push("----------------------------------");
+    lines.push(payerName + " collects:");
+    ac.others.forEach(p => lines.push("  " + p.name.padEnd(10) + " " + peso(ac.share)));
+    lines.push("  " + "TOTAL".padEnd(10) + " " + peso(ac.others.length * ac.share));
+  }
+  lines.push("----------------------------------");
+  lines.push(a.settled ? "✔ Settled" : "Tap Settle in KKB when paid");
+  lines.push("Generated by KKB (offline)");
+
+  const text = lines.join("\n");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => toast("Copied to clipboard")).catch(() => fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function settleActivity(id) {
+  const a = store.activities.find(x => x.id === id);
+  if (!a) return;
+  a.settled = true;
+  a.updatedAt = new Date().toISOString();
+  save();
+  render();
+  const ev = eventById(a.eventId);
+  if (ev && isEventSettled(ev)) toast("All settled — " + ev.title + " is square 🤗");
+  else toast("Marked as settled");
+}
+function unsettleActivity(id) {
+  const a = store.activities.find(x => x.id === id);
+  if (!a) return;
+  a.settled = false;
+  a.updatedAt = new Date().toISOString();
+  save();
+  render();
+  toast("Marked unpaid");
+}
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); toast("Copied to clipboard"); }
+  catch (e) { toast("Copy failed — screenshot the receipt"); }
+  document.body.removeChild(ta);
+}
+
+function resetDemo() {
+  if (!confirm("Reset all data back to the demo trips (Boracay + Tagaytay)?")) return;
+  store = seedData(); save();
+  view = { tab: "events", sub: null, sheet: null, menu: false };
+  render();
+  toast("Demo data restored");
+}
+function about() {
+  view.menu = false;
+  view.sheet = { type: "about" };
+  render();
+}
+function aboutHtml() {
+  return `
+    <div class="overlay">
+      <div class="sheet-head">
+        <button class="icon-btn" data-act="close-sheet" aria-label="Close">${ICON.close}</button>
+        <h3>About KKB</h3>
+      </div>
+      <div class="sheet-body">
+        <div class="about-logo">🤗 KKB</div>
+        <p class="muted-block" style="margin-top:6px">Kanya-Kanyang Bayad — split trips, stay friends.</p>
+        <hr class="divider-rule" />
+        <ul class="about-list" style="padding-left:18px;margin:0">
+          <li><b>Offline-first.</b> Everything is saved on this device in <code>localStorage</code>. No account, no signal needed.</li>
+          <li><b>Equal split.</b> Each member's share of an expense = price ÷ number of people.</li>
+          <li><b>Settle per expense.</b> In Payment, pick an expense, screenshot the receipt, and tap <b>Settle</b> once everyone chips in. An event is settled when all its expenses are.</li>
+          <li><b>Shareable.</b> Screenshot the receipt or copy a text summary into the group chat.</li>
+        </ul>
+        <hr class="divider-rule" />
+        <p class="muted-block" style="font-size:12.5px">Prototype · Hugging Face design direction · ₱ PHP</p>
+      </div>
+      <div class="sheet-foot">
+        <button class="btn btn-secondary btn-block" data-act="close-sheet">Close</button>
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   EVENT DELEGATION
+   ════════════════════════════════════════════════════════════════════ */
+document.getElementById("app").addEventListener("click", (e) => {
+  // ignore clicks inside the activity-sheet's select while we handle change separately
+  const btn = e.target.closest("[data-act]");
+  if (!btn) {
+    // toggle menu closed when clicking outside it
+    if (view.menu && !e.target.closest("#menu") && !e.target.closest('[data-act="open-menu"]')) { view.menu = false; renderMenu(); }
+    return;
+  }
+  const act = btn.getAttribute("data-act");
+  const id = btn.getAttribute("data-id");
+  const tab = btn.getAttribute("data-tab");
+
+  // close menu on any action unless it's opening it
+  if (act !== "open-menu" && view.menu) view.menu = false;
+
+  switch (act) {
+    case "tab": setTab(tab); break;
+    case "back": back(); break;
+    case "open-event": openEvent(id); break;
+    case "open-pay-event": openPayEvent(id); break;
+    case "pay-event-tab": goPayEvent(id); break;
+    case "open-pay-activity": openPayActivity(btn.getAttribute("data-event"), id); break;
+    case "settle-activity": settleActivity(id); break;
+    case "unsettle-activity": unsettleActivity(id); break;
+    case "fab":
+      if (view.tab === "events") { view.sheet = { type: "new-event" }; render(); }
+      else if (view.tab === "activities") openActivitySheet();
+      break;
+    case "new-event": view.sheet = { type: "new-event" }; render(); break;
+    case "new-activity": openActivitySheet(); break;
+    case "new-activity-pre": openActivitySheet(null, btn.getAttribute("data-event")); break;
+    case "edit-activity": openActivitySheet(id); break;
+    case "close-sheet":
+      view.sheet = null;
+      render();
+      break;
+    case "save-event": saveEvent(); break;
+    case "save-activity": saveActivity(); break;
+    case "delete-activity": deleteActivity(id); break;
+    case "delete-event": deleteEvent(id); break;
+    case "add-pax": addParticipant(); break;
+    case "finish-pax": finishPax(); break;
+    case "remove-pax": removePax(id); break;
+    case "copy-summary": copyActivitySummary(id); break;
+    case "open-menu": view.menu = !view.menu; renderMenu(); break;
+    case "reset-demo": resetDemo(); break;
+    case "about": about(); break;
+  }
+});
+
+/* Enter-to-add on participant input + event/activity change handling */
+document.getElementById("app").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target && e.target.id === "pax-name") {
+    e.preventDefault();
+    addParticipant();
+  }
+});
+document.getElementById("app").addEventListener("change", (e) => {
+  if (e.target && e.target.id === "act-event") {
+    // re-render paid-by options for the newly selected event
+    const sel = document.getElementById("act-paidby");
+    const ev = eventById(e.target.value);
+    if (sel && ev) {
+      sel.innerHTML = ev.participants.map(p => `<option value="${p.id}" data-name="${esc(p.name)}">${esc(p.name)}</option>`).join("");
+    } else if (sel) {
+      sel.innerHTML = `<option value="">— add participants first —</option>`;
+    }
+  }
+});
+
+/* initial paint */
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+/* Button */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 11px 18px;
+	border-radius: var(--radius-md);
+	border: 1px solid transparent;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	transition:
+		background var(--motion-fast) var(--ease-standard),
+		border-color var(--motion-fast) var(--ease-standard),
+		transform var(--motion-fast) var(--ease-standard);
+}
+
+.btn:active {
+	transform: translateY(1px);
+}
+
+.btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: var(--fg);
+	color: var(--surface);
+}
+
+.btn-primary:hover:not(:disabled) {
+	background: var(--fg-2);
+}
+
+.btn-yellow {
+	background: var(--accent);
+	color: var(--accent-on);
+}
+
+.btn-yellow:hover:not(:disabled) {
+	background: var(--accent-hover);
+}
+
+.btn-secondary {
+	background: var(--surface);
+	color: var(--fg);
+	border-color: var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+	border-color: var(--fg);
+}
+
+.btn-ghost {
+	background: transparent;
+	color: var(--fg-2);
+}
+
+.btn-ghost:hover:not(:disabled) {
+	color: var(--fg);
+}
+
+.btn-danger {
+	background: transparent;
+	color: var(--danger);
+	border-color: color-mix(in oklab, var(--danger) 30%, transparent);
+}
+
+.btn-danger:hover:not(:disabled) {
+	background: color-mix(in oklab, var(--danger) 8%, white);
+}
+
+.btn-block {
+	display: flex;
+	width: 100%;
+}
+
+.btn-sm {
+	padding: 8px 12px;
+	font-size: 12px;
+}
+
+/* Icon button */
+.icon-btn {
+	width: 36px;
+	height: 36px;
+	flex: 0 0 auto;
+	display: grid;
+	place-items: center;
+	border-radius: var(--radius-md);
+	color: var(--fg-2);
+	transition: background var(--motion-fast) var(--ease-standard);
+}
+
+.icon-btn:hover:not(:disabled) {
+	background: var(--border-soft);
+}
+
+.icon-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.icon-btn :global(svg) {
+	width: 20px;
+	height: 20px;
+}
+
+/* Avatar */
+.avatar {
+	width: 24px;
+	height: 24px;
+	border-radius: var(--radius-pill);
+	display: grid;
+	place-items: center;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	flex: 0 0 auto;
+}
+
+.avatar-sm {
+	width: 18px;
+	height: 18px;
+	font-size: 9px;
+}
+
+.avatar-md {
+	width: 20px;
+	height: 20px;
+	font-size: 10px;
+}
+
+.avatar-lg {
+	width: 28px;
+	height: 28px;
+	font-size: 12px;
+}
+
+.av-0 {
+	background: color-mix(in oklab, var(--cat-blue) 15%, white);
+	color: var(--cat-blue);
+}
+
+.av-1 {
+	background: color-mix(in oklab, var(--cat-green) 15%, white);
+	color: var(--cat-green);
+}
+
+.av-2 {
+	background: color-mix(in oklab, var(--cat-purple) 15%, white);
+	color: var(--cat-purple);
+}
+
+.av-3 {
+	background: color-mix(in oklab, var(--cat-pink) 15%, white);
+	color: var(--cat-pink);
+}
+
+.av-4 {
+	background: color-mix(in oklab, var(--cat-orange) 15%, white);
+	color: var(--cat-orange);
+}
+
+.av-5 {
+	background: color-mix(in oklab, var(--cat-blue) 12%, white);
+	color: var(--cat-blue);
+}
+
+/* Chip */
+.chip {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 500;
+	padding: 2px 7px;
+	border-radius: var(--radius-sm);
+	line-height: 1.5;
+	display: inline-flex;
+	align-items: center;
+}
+
+.chip-paid {
+	background: color-mix(in oklab, var(--cat-green) 14%, white);
+	color: var(--cat-green);
+}
+
+.chip-event {
+	background: var(--border-soft);
+	color: var(--fg-2);
+}
+
+.chip-settled {
+	background: color-mix(in oklab, var(--success) 14%, white);
+	color: var(--success);
+}
+
+/* Form field */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 14px;
+}
+
+.field label {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	letter-spacing: 0.02em;
+	color: var(--muted);
+}
+
+.field label .req {
+	color: var(--danger);
+}
+
+.input,
+.select {
+	width: 100%;
+	padding: 12px 13px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	background: var(--surface);
+	color: var(--fg);
+	font-size: var(--text-base);
+	transition:
+		border-color var(--motion-fast) var(--ease-standard),
+		box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.input:focus,
+.select:focus {
+	outline: none;
+	border-color: var(--fg);
+	box-shadow: var(--focus-ring);
+}
+
+.input:disabled,
+.select:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.input.amount {
+	font-family: var(--font-mono);
+	font-weight: 600;
+}
+
+.amount-wrap {
+	position: relative;
+}
+
+.amount-wrap .cur {
+	position: absolute;
+	left: 13px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-family: var(--font-mono);
+	font-weight: 600;
+	color: var(--muted);
+	pointer-events: none;
+}
+
+.amount-wrap .input {
+	padding-left: 30px;
+}
+
+.field-hint {
+	font-size: 11px;
+	color: var(--muted);
+}
+
+/* Screen head */
+.screen-head {
+	margin-bottom: 14px;
+}
+
+.screen-head h2 {
+	font-size: var(--text-xl);
+	font-weight: 600;
+}
+
+.screen-head p {
+	color: var(--muted);
+	font-size: var(--text-sm);
+	margin-top: 3px;
+}
+
+/* Eyebrow */
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: var(--text-xs);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.eyebrow-accent {
+	color: var(--fg);
+}

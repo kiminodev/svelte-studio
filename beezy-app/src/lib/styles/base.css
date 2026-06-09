@@ -1,0 +1,61 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: color-mix(in oklab, var(--fg) 7%, var(--bg));
+	color: var(--fg);
+	font-family: var(--font-body);
+	font-size: var(--text-base);
+	line-height: var(--leading-body);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+img,
+svg {
+	display: block;
+	max-width: 100%;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	background: none;
+	border: 0;
+}
+
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	margin: 0;
+	font-family: var(--font-display);
+	line-height: var(--leading-tight);
+	letter-spacing: var(--tracking-display);
+}
+
+p {
+	margin: 0;
+	text-wrap: pretty;
+}
+
+.mono {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+}
