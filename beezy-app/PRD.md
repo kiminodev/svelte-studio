@@ -116,11 +116,11 @@ Reproduce the mockup phone-frame shell (440px column, safe areas, internal scrol
 |-----------|--------------|--------|
 | `AppShell` | `.app` | [x] |
 | `AppBar` | `.appbar`, `.appbar-row` | [x] |
-| `Screen` | `.screen` + scroll region | [x] |
-| `TabBar` | `.tabbar` | [x] |
-| `Tab` | `.tab` | [x] |
-| `Fab` | `.fab` | [x] |
-| `Sheet` | `.overlay` + `.sheet-*` | [x] |
+| `Screen` | `.screen` + scroll region | [ ] |
+| `TabBar` | `.tabbar` | [ ] |
+| `Tab` | `.tab` | [ ] |
+| `Fab` | `.fab` | [ ] |
+| `Sheet` | `.overlay` + `.sheet-*` | [ ] |
 | `Toast` | `.toast` | [ ] |
 | `MenuPopover` | `.menu-pop`, `.menu-item` | [ ] |
 | Icons module | mockup `ICON` object | [ ] extract to `icons/` |
@@ -138,7 +138,7 @@ Hide FAB on `payment` tab and all sub-screens.
 
 ### Exit criteria
 
-- [x] Showcase demonstrates shell: app bar + 3 tabs + FAB + sheet
+- [ ] Showcase demonstrates shell: app bar + 3 tabs + FAB + sheet
 - [ ] Toast shows/hides with animation
 - [ ] Menu popover opens from app bar "more" button
 - [ ] Tab active state matches mockup (yellow top indicator)
@@ -505,4 +505,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: reflects Phase 1 complete, Phase 2 in progress (`AppShell`, `AppBar`, `Screen`, `TabBar`, `Tab`, `Fab`, `Sheet`). Update checkboxes in this file as phases land.*
+*Last updated: reflects Phase 1 complete, Phase 2 in progress (`shell.css` ✅, `AppShell` ✅, `AppBar` ✅). Update checkboxes in this file as phases land.*

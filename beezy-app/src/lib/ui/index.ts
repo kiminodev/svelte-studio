@@ -1,4 +1,6 @@
 export { default as AmountInput } from './AmountInput.svelte';
+export { default as AppBar } from './AppBar.svelte';
+export { default as AppShell } from './AppShell.svelte';
 export { default as Avatar } from './Avatar.svelte';
 export { default as Button } from './Button.svelte';
 export { default as Chip } from './Chip.svelte';
