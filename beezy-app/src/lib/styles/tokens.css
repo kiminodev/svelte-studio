@@ -1,0 +1,76 @@
+/**
+ * KKB / Beezy design tokens — Hugging Face visual system.
+ * Sourced from beezy-mockup.html; do not redefine colors ad-hoc in components.
+ */
+:root {
+	--bg: #fafafa;
+	--surface: #ffffff;
+	--surface-warm: #fff4cc;
+
+	--fg: #0d1117;
+	--fg-2: #374151;
+	--muted: #6b7280;
+	--meta: var(--muted);
+
+	--border: #e5e7eb;
+	--border-soft: #f3f4f6;
+
+	--accent: #ffd21e;
+	--accent-on: #0d1117;
+	--accent-hover: #f59e0b;
+	--accent-active: color-mix(in oklab, var(--accent), black 20%);
+
+	--success: #16a34a;
+	--warn: #f59e0b;
+	--danger: #dc2626;
+
+	--font-display: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--font-body: 'Source Sans 3', 'Source Sans Pro', Inter, system-ui, -apple-system, sans-serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+	--text-xs: 12px;
+	--text-sm: 13px;
+	--text-base: 15px;
+	--text-lg: 18px;
+	--text-xl: 24px;
+	--text-2xl: 32px;
+
+	--leading-body: 1.55;
+	--leading-tight: 1.1;
+	--tracking-display: -0.01em;
+
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-12: 48px;
+
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-pill: 9999px;
+
+	--elev-flat: none;
+	--elev-ring: 0 0 0 1px var(--border);
+	--elev-raised: 0 2px 8px color-mix(in oklab, var(--fg), transparent 90%);
+
+	--focus-ring: 0 0 0 3px rgba(13, 17, 23, 0.1);
+
+	--motion-fast: 120ms;
+	--motion-base: 200ms;
+	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+	--container-max: 1280px;
+	--container-gutter-desktop: 24px;
+	--container-gutter-tablet: 16px;
+	--container-gutter-phone: 12px;
+
+	--cat-blue: #2563eb;
+	--cat-green: #16a34a;
+	--cat-purple: #9333ea;
+	--cat-pink: #db2777;
+	--cat-orange: #ea580c;
+}
