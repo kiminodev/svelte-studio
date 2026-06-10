@@ -1,10 +1,37 @@
 <script lang="ts">
-	import { AppBar, AppShell, Eyebrow, Fab, IconButton, Screen, ScreenHead, Tab, TabBar } from '$lib/ui';
+	import {
+		AppBar,
+		AppShell,
+		Button,
+		Eyebrow,
+		Fab,
+		Icon,
+		IconButton,
+		MenuItem,
+		MenuPopover,
+		Screen,
+		ScreenHead,
+		Sheet,
+		Tab,
+		TabBar,
+		Toast,
+		scheduleToastHide
+	} from '$lib/ui';
 
 	type TabId = 'activities' | 'events' | 'payment';
 
 	let tab = $state<TabId>('events');
 	let hasEvents = $state(true);
+	let sheetOpen = $state(false);
+	let menuOpen = $state(false);
+	let toastOpen = $state(false);
+	let toastMessage = $state('');
+
+	function showToast(message: string) {
+		toastMessage = message;
+		toastOpen = true;
+		scheduleToastHide((open) => (toastOpen = open));
+	}
 
 	const tabLabels: Record<TabId, string> = {
 		activities: 'Activities',
@@ -12,22 +39,26 @@
 		payment: 'Payment'
 	};
 
-	/** Mockup FAB rules: events always; activities only when events exist; never on payment. */
+	/** Mockup FAB rules: no sheet/sub-screen; events always; activities when events exist. */
 	const fabVisible = $derived(
-		tab === 'events' || (tab === 'activities' && hasEvents)
+		!sheetOpen && (tab === 'events' || (tab === 'activities' && hasEvents))
 	);
+
+	function closeMenu() {
+		menuOpen = false;
+	}
 </script>
 
 <AppShell>
 	<AppBar title="Welcome to Beezy" subtitle="Split trips, stay friends">
 		{#snippet brand()}🤗{/snippet}
 		{#snippet trailing()}
-			<IconButton aria-label="More">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
-					<circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none" />
-				</svg>
+			<IconButton
+				aria-label="More"
+				class="menu-trigger"
+				onclick={() => (menuOpen = !menuOpen)}
+			>
+				<Icon name="more" />
 			</IconButton>
 		{/snippet}
 	</AppBar>
@@ -36,7 +67,7 @@
 		<Eyebrow accent>Phase 2 — App shell</Eyebrow>
 		<ScreenHead
 			title={tabLabels[tab]}
-			description="FAB hides on Payment; on Activities only when no events. Next: Sheet."
+			description="Phase 2 complete — shell, toast, menu, and shared icons. Next: Phase 3 cards."
 		/>
 		<p style="color: var(--muted); font-size: var(--text-sm); margin-top: 8px">
 			Active tab: <span class="mono">{tab}</span> · FAB: <span class="mono">{fabVisible ? 'visible' : 'hidden'}</span>
@@ -45,37 +76,76 @@
 			<input type="checkbox" bind:checked={hasEvents} />
 			Has events (Activities tab FAB rule)
 		</label>
+		<Button variant="secondary" class="mt-3" onclick={() => showToast('Event created')}>
+			Show toast
+		</Button>
 	</Screen>
 
-	<Fab aria-label="Add" hidden={!fabVisible}>
-		<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+	<Fab aria-label="Add" hidden={!fabVisible} onclick={() => (sheetOpen = true)}>
+		<Icon name="plus" />
 	</Fab>
 
 	<TabBar>
 		<Tab label="Activities" active={tab === 'activities'} onclick={() => (tab = 'activities')}>
-			{#snippet icon()}
-				<svg viewBox="0 0 24 24">
-					<rect x="5" y="4" width="14" height="17" rx="2" />
-					<path d="M9 3.5h6v3H9z" />
-					<path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5" />
-				</svg>
-			{/snippet}
+			{#snippet icon()}<Icon name="activities" />{/snippet}
 		</Tab>
 		<Tab label="Events" active={tab === 'events'} onclick={() => (tab = 'events')}>
-			{#snippet icon()}
-				<svg viewBox="0 0 24 24">
-					<path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z" />
-					<circle cx="12" cy="9" r="2.4" />
-				</svg>
-			{/snippet}
+			{#snippet icon()}<Icon name="events" />{/snippet}
 		</Tab>
 		<Tab label="Payment" active={tab === 'payment'} onclick={() => (tab = 'payment')}>
-			{#snippet icon()}
-				<svg viewBox="0 0 24 24">
-					<path d="M6 3h12v18l-2.2-1.3-2 1.3-1.8-1.3L9.8 21 8 19.7 6 21V3Z" />
-					<path d="M9 8.5h6M9 12h6M9 15.5h3.5" />
-				</svg>
-			{/snippet}
+			{#snippet icon()}<Icon name="payment" />{/snippet}
 		</Tab>
 	</TabBar>
+
+	<MenuPopover open={menuOpen} onclose={closeMenu}>
+		<MenuItem
+			label="About Beezy"
+			onclick={() => {
+				closeMenu();
+				showToast('About sheet — Phase 6');
+			}}
+		>
+			{#snippet icon()}<Icon name="info" />{/snippet}
+		</MenuItem>
+		<MenuItem
+			label="Reset demo data"
+			onclick={() => {
+				closeMenu();
+				showToast('Demo data restored');
+			}}
+		>
+			{#snippet icon()}<Icon name="refresh" />{/snippet}
+		</MenuItem>
+	</MenuPopover>
+
+	<Sheet open={sheetOpen}>
+		{#snippet head()}
+			<div class="sheet-head">
+				<IconButton aria-label="Close" onclick={() => (sheetOpen = false)}>
+					<Icon name="close" />
+				</IconButton>
+				<h3>New event</h3>
+			</div>
+		{/snippet}
+		{#snippet body()}
+			<p style="color: var(--muted); font-size: 13px">
+				Sheet body slot — forms and detail content go here.
+			</p>
+		{/snippet}
+		{#snippet foot()}
+			<Button variant="secondary" block onclick={() => (sheetOpen = false)}>Cancel</Button>
+			<Button
+				variant="yellow"
+				block
+				onclick={() => {
+					sheetOpen = false;
+					showToast('Event created');
+				}}
+			>
+				Add event
+			</Button>
+		{/snippet}
+	</Sheet>
+
+	<Toast message={toastMessage} open={toastOpen} />
 </AppShell>

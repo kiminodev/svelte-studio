@@ -43,7 +43,7 @@ Hugging Face direction: sunshine yellow (`#ffd21e`) + IBM Plex Mono identity + S
 
 ```
 Phase 1  Atoms & tokens          ✅ Done
-Phase 2  App shell               🔄 In progress
+Phase 2  App shell               ✅ Done
 Phase 3  Cards & list molecules ⬜ Not started
 Phase 4  Domain layer            ⬜ Not started
 Phase 5  Tab screens             ⬜ Not started
@@ -102,7 +102,7 @@ Thin Svelte wrappers over global CSS classes in `primitives.css` — not Tailwin
 
 ---
 
-## Phase 2 — App shell & layout 🔄
+## Phase 2 — App shell & layout ✅
 
 Reproduce the mockup phone-frame shell (440px column, safe areas, internal scroll).
 
@@ -120,10 +120,10 @@ Reproduce the mockup phone-frame shell (440px column, safe areas, internal scrol
 | `TabBar` | `.tabbar` | [x] |
 | `Tab` | `.tab` | [x] |
 | `Fab` | `.fab` | [x] |
-| `Sheet` | `.overlay` + `.sheet-*` | [ ] |
-| `Toast` | `.toast` | [ ] |
-| `MenuPopover` | `.menu-pop`, `.menu-item` | [ ] |
-| Icons module | mockup `ICON` object | [ ] extract to `icons/` |
+| `Sheet` | `.overlay` + `.sheet-*` | [x] |
+| `Toast` | `.toast` | [x] |
+| `MenuPopover` | `.menu-pop`, `.menu-item` | [x] |
+| Icons module | mockup `ICON` object | [x] `src/lib/ui/icons/` |
 
 `AppBar` uses slots for brand (🤗 badge) and leading/trailing actions instead of a separate `BrandBadge` component.
 
@@ -138,9 +138,9 @@ Hide FAB on `payment` tab and all sub-screens.
 
 ### Exit criteria
 
-- [ ] Showcase demonstrates shell: app bar + 3 tabs + FAB + sheet
-- [ ] Toast shows/hides with animation
-- [ ] Menu popover opens from app bar "more" button
+- [x] Showcase demonstrates shell: app bar + 3 tabs + FAB + sheet
+- [x] Toast shows/hides with animation
+- [x] Menu popover opens from app bar "more" button
 - [x] Tab active state matches mockup (yellow top indicator)
 - [ ] FAB visibility follows rules above (wired to real view state in Phase 5)
 
@@ -466,7 +466,7 @@ beezy-app/
         utils.ts
       components/ui/              # all Svelte UI components
         index.ts
-        icons/                    # Phase 2
+        icons/                    # Phase 2 — Icon.svelte + IconName
     routes/
       +layout.svelte
       +page.svelte                # real app (Phase 5+)
@@ -505,4 +505,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: reflects Phase 1 complete, Phase 2 in progress (`shell.css` ✅, `AppShell` ✅, `AppBar` ✅, `Screen` ✅, `TabBar` ✅, `Tab` ✅, `Fab` ✅). Update checkboxes in this file as phases land.*
+*Last updated: Phase 2 complete (shell, toast, menu, icons). FAB visibility wired to real view state deferred to Phase 5. Next: Phase 3 list & card molecules.*
