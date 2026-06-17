@@ -1,42 +1,48 @@
-# sv
+# Beezy
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Equal-split group budget tracker for friends who travel together — built with SvelteKit 2 and Svelte 5.
 
-## Creating a project
+**Offline-first.** Events and activities are stored in **IndexedDB** on the device. No account, no signal required.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Documentation
 
-```sh
-# create a new project
-npx sv create my-app
-```
+**[PRD.md](./PRD.md)** — full product spec and phased development roadmap. Use this as your checklist from atoms through ship.
 
-To recreate this project with the same configuration:
+| Resource | Path |
+|----------|------|
+| Phase guide & parity checklist | [`PRD.md`](./PRD.md) |
+| Visual + behavior reference | [`static/beezy-mockup.html`](./static/beezy-mockup.html) |
+| UI components | [`src/lib/components/ui/`](./src/lib/components/ui/) |
+| Design tokens | [`src/lib/styles/`](./src/lib/styles/) |
 
-```sh
-# recreate this project
-bun x sv@0.15.4 create --template minimal --types ts --install bun beezy-app
-```
+## Current status
+
+| Phase | Focus | Status |
+|-------|--------|--------|
+| 1 | Tokens & atoms | Done |
+| 2 | App shell | In progress |
+| 3–8 | Cards, domain, screens, payment, polish | See [PRD.md](./PRD.md) |
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun install
+bun run dev
 ```
 
-## Building
-
-To create a production version of your app:
+Open [http://localhost:5173](http://localhost:5173) — the home page is currently the UI component showcase.
 
 ```sh
-npm run build
+bun run check    # svelte-check + TypeScript
+bun run build    # production build
+bun run preview  # preview production build
 ```
 
-You can preview the production build with `npm run preview`.
+## Project layout
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```
+src/lib/components/ui/   # Svelte UI kit
+src/lib/styles/          # tokens, primitives, shell CSS
+src/lib/beezy/           # domain helpers (settlement, store — Phase 4+)
+static/beezy-mockup.html # single-file reference app (legacy KKB naming inside)
+```

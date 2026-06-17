@@ -2,6 +2,7 @@
 @import './lib/styles/tokens.css';
 @import './lib/styles/base.css';
 @import './lib/styles/primitives.css';
+@import './lib/styles/shell.css';
 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
