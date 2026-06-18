@@ -1,6 +1,6 @@
 /**
- * List & card molecules — Phase 3.
- * Sourced from beezy-mockup.html (CARDS / LISTS, EMPTY STATE).
+ * List, card & event detail molecules — Phase 3.
+ * Sourced from beezy-mockup.html.
  */
 
 .card {
@@ -196,4 +196,169 @@
 
 .empty .btn {
 	margin-top: 18px;
+}
+
+/* Event detail */
+
+.summary-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.stat-cell {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 11px 12px;
+}
+
+.stat-cell .lbl {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.stat-cell .val {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: var(--text-lg);
+	margin-top: 3px;
+}
+
+.stat-cell .val.warn {
+	color: var(--danger);
+}
+
+.pax-row {
+	display: grid;
+	grid-template-columns: 28px 1fr auto;
+	gap: 11px;
+	align-items: center;
+	padding: 11px 13px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	margin-bottom: 7px;
+}
+
+.pax-row .nm {
+	font-weight: 600;
+	font-size: var(--text-base);
+}
+
+.pax-row .sub {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
+	margin-top: 1px;
+}
+
+.pax-row .bal {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: var(--text-base);
+	text-align: right;
+}
+
+.bal.pos {
+	color: var(--success);
+}
+
+.bal.neg {
+	color: var(--danger);
+}
+
+.bal.zero {
+	color: var(--muted);
+}
+
+.pax-remove {
+	width: 22px;
+	height: 22px;
+	border-radius: var(--radius-sm);
+	display: grid;
+	place-items: center;
+	color: var(--muted);
+}
+
+.pax-remove:hover {
+	color: var(--danger);
+	background: color-mix(in oklab, var(--danger) 8%, white);
+}
+
+.pax-remove svg {
+	width: 14px;
+	height: 14px;
+}
+
+.section-label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 18px 0 9px;
+}
+
+.section-label .eyebrow {
+	font-size: 11px;
+}
+
+.hint-card {
+	background: var(--surface-warm);
+	border: 1px solid color-mix(in oklab, var(--accent) 45%, white);
+	border-radius: var(--radius-md);
+	padding: 11px 13px;
+	font-size: 12.5px;
+	color: var(--fg-2);
+	margin-bottom: 14px;
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+}
+
+.hint-card .h-emoji {
+	font-size: 15px;
+	line-height: 1.4;
+	flex: 0 0 auto;
+}
+
+.muted-block {
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.divider-rule {
+	height: 1px;
+	background: var(--border);
+	margin: 16px 0;
+	border: 0;
+}
+
+.add-pax {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.add-pax .input {
+	flex: 1 1 auto;
+}
+
+.add-pax .btn {
+	flex: 0 0 auto;
+}
+
+.pax-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 16px;
+	flex-wrap: wrap;
+}
+
+.pax-balance-note {
+	font-size: 12px;
+	margin-top: 8px;
 }

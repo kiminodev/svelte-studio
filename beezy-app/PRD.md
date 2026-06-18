@@ -161,12 +161,13 @@ Reusable building blocks for all three main tabs.
 | `ActivityRow` | `.act-row` | [x] |
 | `PayEventCard` | `.pay-event-card` | [ ] |
 | `PayProgress` | `.pay-progress` | [ ] |
-| `StatGrid` / `StatCell` | `.summary-grid`, `.stat-cell` | [ ] |
-| `ParticipantRow` | `.pax-row` | [ ] |
-| `SectionLabel` | `.section-label` | [ ] |
-| `HintCard` | `.hint-card` | [ ] |
-| `AddParticipantRow` | `.add-pax` | [ ] |
-| `Divider` | `.divider-rule` | [ ] |
+| `StatGrid` / `StatCell` | `.summary-grid`, `.stat-cell` | [x] |
+| `ParticipantRow` | `.pax-row` | [x] |
+| `SectionLabel` | `.section-label` | [x] |
+| `HintCard` | `.hint-card` | [x] |
+| `AddParticipantRow` | `.add-pax` | [x] |
+| `Divider` | `.divider-rule` | [x] |
+| `EventDetail` | `viewEventDetail()` | [x] |
 | `Receipt` | `.receipt` | [ ] |
 | `ReceiptLine` | `.r-line` | [ ] |
 | `ReceiptMember` | `.r-member` | [ ] |

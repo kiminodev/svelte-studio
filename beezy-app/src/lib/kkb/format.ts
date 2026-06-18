@@ -11,3 +11,10 @@ export function fmtDate(iso: string): string {
 	const d = new Date(iso);
 	return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 }
+
+/** Signed peso for balance display (e.g. +₱1,200 or −₱800). */
+export function pesoSigned(n: number): string {
+	const rounded = Math.round(n);
+	const sign = rounded > 0 ? '+' : rounded < 0 ? '−' : '';
+	return sign + '₱' + pesoFmt.format(Math.abs(rounded));
+}
