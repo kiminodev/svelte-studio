@@ -44,7 +44,7 @@ Hugging Face direction: sunshine yellow (`#ffd21e`) + IBM Plex Mono identity + S
 ```
 Phase 1  Atoms & tokens          ✅ Done
 Phase 2  App shell               ✅ Done
-Phase 3  Cards & list molecules ⬜ Not started
+Phase 3  Cards & list molecules 🔄 In progress
 Phase 4  Domain layer            ⬜ Not started
 Phase 5  Tab screens             ⬜ Not started
 Phase 6  Sheets, forms & menu    ⬜ Not started
@@ -146,30 +146,30 @@ Hide FAB on `payment` tab and all sub-screens.
 
 ---
 
-## Phase 3 — List & card molecules ⬜
+## Phase 3 — List & card molecules 🔄
 
 Reusable building blocks for all three main tabs.
 
 ### Components to build
 
-| Component | Mockup class | Key props |
-|-----------|--------------|-----------|
-| `EmptyState` | `.empty` | emoji, title, description, CTA slot |
-| `Card` | `.card` | base surface (optional) |
-| `EventCard` | `.event-card` | title, date, budget, pax, activities, spent, progress, overBudget |
-| `ProgressBar` | `.progress` | value, max, variant (default / over / done) |
-| `ActivityRow` | `.act-row` | name, price, paidBy, event, date, edited |
-| `PayEventCard` | `.pay-event-card` | title, summary, settled |
-| `PayProgress` | `.pay-progress` | label, detail, pct, done |
-| `StatGrid` / `StatCell` | `.summary-grid`, `.stat-cell` | label + value |
-| `ParticipantRow` | `.pax-row` | name, paid, status, balance, removable |
-| `SectionLabel` | `.section-label` | left / right eyebrow |
-| `HintCard` | `.hint-card` | emoji + content |
-| `AddParticipantRow` | `.add-pax` | input + Add / Finish |
-| `Divider` | `.divider-rule` | — |
-| `Receipt` | `.receipt` | split into sub-parts |
-| `ReceiptLine` | `.r-line` | key / value |
-| `ReceiptMember` | `.r-member` | avatar, name, amount |
+| Component | Mockup class | Status |
+|-----------|--------------|--------|
+| `EmptyState` | `.empty` | [x] |
+| `Card` | `.card` | [ ] |
+| `EventCard` | `.event-card` | [x] |
+| `ProgressBar` | `.progress` | [x] |
+| `ActivityRow` | `.act-row` | [x] |
+| `PayEventCard` | `.pay-event-card` | [ ] |
+| `PayProgress` | `.pay-progress` | [ ] |
+| `StatGrid` / `StatCell` | `.summary-grid`, `.stat-cell` | [ ] |
+| `ParticipantRow` | `.pax-row` | [ ] |
+| `SectionLabel` | `.section-label` | [ ] |
+| `HintCard` | `.hint-card` | [ ] |
+| `AddParticipantRow` | `.add-pax` | [ ] |
+| `Divider` | `.divider-rule` | [ ] |
+| `Receipt` | `.receipt` | [ ] |
+| `ReceiptLine` | `.r-line` | [ ] |
+| `ReceiptMember` | `.r-member` | [ ] |
 
 ### CSS source
 
@@ -180,9 +180,12 @@ Copy from `beezy-mockup.html`:
 
 Consider `components.css` if `primitives.css` + `shell.css` grow too large.
 
+- [x] `components.css` — empty, event-card, progress, act-row (Batch A)
+
 ### Exit criteria
 
-- Kit page demos EventCard, ActivityRow, EmptyState, ParticipantRow, Receipt with seed data
+- [x] Kit page demos EventCard, ActivityRow, EmptyState with seed data
+- [ ] Kit page demos ParticipantRow, Receipt with seed data
 - Side-by-side visual match with mockup
 
 ---

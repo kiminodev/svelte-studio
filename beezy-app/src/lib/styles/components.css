@@ -1,0 +1,199 @@
+/**
+ * List & card molecules — Phase 3.
+ * Sourced from beezy-mockup.html (CARDS / LISTS, EMPTY STATE).
+ */
+
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+}
+
+/* Event card */
+.event-card {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 14px 15px;
+	margin-bottom: 10px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	transition:
+		border-color var(--motion-fast) var(--ease-standard),
+		transform var(--motion-fast) var(--ease-standard);
+}
+
+.event-card:hover {
+	border-color: var(--fg);
+}
+
+.event-card:active {
+	transform: scale(0.992);
+}
+
+.event-card-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.event-card h3 {
+	font-size: var(--text-lg);
+	font-weight: 600;
+}
+
+.event-card .eyebrow {
+	margin-top: 4px;
+	display: block;
+}
+
+.event-budget-tag {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	padding: 3px 8px;
+	border-radius: var(--radius-sm);
+	background: var(--surface-warm);
+	color: var(--fg);
+}
+
+.event-meta {
+	display: flex;
+	gap: 14px;
+	margin-top: 10px;
+	color: var(--muted);
+	font-size: 12px;
+}
+
+.event-meta b {
+	color: var(--fg-2);
+	font-weight: 600;
+}
+
+/* Progress */
+.progress {
+	margin-top: 11px;
+}
+
+.progress-track {
+	height: 6px;
+	border-radius: var(--radius-pill);
+	background: var(--border-soft);
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	border-radius: var(--radius-pill);
+	background: var(--fg);
+}
+
+.progress-fill.over {
+	background: var(--danger);
+}
+
+.progress-fill.done {
+	background: var(--success);
+}
+
+.progress-row {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 5px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
+}
+
+.progress-row .over-txt {
+	color: var(--danger);
+	font-weight: 600;
+}
+
+/* Activity row */
+.act-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 8px 12px;
+	align-items: center;
+	width: 100%;
+	text-align: left;
+	padding: 12px 14px;
+	margin-bottom: 8px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+.act-row:hover {
+	border-color: var(--fg);
+}
+
+.act-name {
+	font-weight: 600;
+	font-size: var(--text-base);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.act-price {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: var(--text-base);
+	white-space: nowrap;
+}
+
+.act-sub {
+	grid-column: 1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.act-edited {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
+}
+
+/* Empty state */
+.empty {
+	text-align: center;
+	padding: 56px 24px 24px;
+}
+
+.empty-badge {
+	width: 72px;
+	height: 72px;
+	margin: 0 auto 18px;
+	border-radius: 20px;
+	background: var(--accent);
+	display: grid;
+	place-items: center;
+	font-size: 40px;
+	line-height: 1;
+}
+
+.empty h3 {
+	font-size: var(--text-xl);
+	font-weight: 600;
+}
+
+.empty p {
+	color: var(--muted);
+	font-size: var(--text-sm);
+	margin-top: 6px;
+	max-width: 30ch;
+	margin-inline: auto;
+}
+
+.empty .btn {
+	margin-top: 18px;
+}
