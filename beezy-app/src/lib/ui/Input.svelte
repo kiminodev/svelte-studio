@@ -14,6 +14,7 @@
 		class?: string;
 		oninput?: (event: Event) => void;
 		onchange?: (event: Event) => void;
+		onkeydown?: (event: KeyboardEvent) => void;
 	}
 
 	let {
@@ -28,7 +29,8 @@
 		inputmode,
 		class: className = '',
 		oninput,
-		onchange
+		onchange,
+		onkeydown
 	}: Props = $props();
 </script>
 
@@ -45,4 +47,5 @@
 	class={cn('input', className)}
 	{oninput}
 	{onchange}
+	{onkeydown}
 />
