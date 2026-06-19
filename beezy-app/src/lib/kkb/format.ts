@@ -12,6 +12,16 @@ export function fmtDate(iso: string): string {
 	return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 }
 
+/** Date and time for receipts (e.g. "Jun 6 · 2:00 PM"). */
+export function fmtDateTime(iso: string): string {
+	const d = new Date(iso);
+	return (
+		d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) +
+		' · ' +
+		d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+	);
+}
+
 /** Signed peso for balance display (e.g. +₱1,200 or −₱800). */
 export function pesoSigned(n: number): string {
 	const rounded = Math.round(n);

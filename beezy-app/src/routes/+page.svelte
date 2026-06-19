@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { calcEvent } from '$lib/kkb/settlement';
+	import {
+		calcActivity,
+		calcEvent,
+		isEventSettled,
+		payEventSummary
+	} from '$lib/kkb/settlement';
+	import { fmtDate, peso } from '$lib/kkb/format';
 	import {
 		ActivityRow,
 		AppBar,
@@ -11,11 +17,14 @@
 		type EventDetailData,
 		Eyebrow,
 		Fab,
+		HintCard,
 		Icon,
 		IconButton,
 		MenuItem,
 		MenuPopover,
-		ProgressBar,
+		PayEventCard,
+		PayProgress,
+		Receipt,
 		Screen,
 		ScreenHead,
 		Sheet,
@@ -26,7 +35,22 @@
 	} from '$lib/ui';
 
 	type TabId = 'activities' | 'events' | 'payment';
-	type DemoEvent = EventDetailData & { createdAt: string };
+
+	interface DemoActivity {
+		id: string;
+		name: string;
+		price: number;
+		paidById: string;
+		paidByName: string;
+		createdAt: string;
+		updatedAt?: string;
+		settled?: boolean;
+	}
+
+	type DemoEvent = Omit<EventDetailData, 'activities'> & {
+		createdAt: string;
+		activities: DemoActivity[];
+	};
 
 	function uid() {
 		return Math.random().toString(36).slice(2, 9);
@@ -35,6 +59,8 @@
 	let tab = $state<TabId>('events');
 	let showEmpty = $state(false);
 	let detailEventId = $state<string | null>(null);
+	let payEventId = $state<string | null>(null);
+	let payActivityId = $state<string | null>(null);
 	let sheetOpen = $state(false);
 	let menuOpen = $state(false);
 	let toastOpen = $state(false);
@@ -53,12 +79,58 @@
 				{ id: 'p4', name: 'Paolo' }
 			],
 			activities: [
-				{ price: 8000, paidById: 'p1' },
-				{ price: 3600, paidById: 'p2' },
-				{ price: 1200, paidById: 'p4' },
-				{ price: 2400, paidById: 'p3' },
-				{ price: 5000, paidById: 'p1' },
-				{ price: 2800, paidById: 'p2' }
+				{
+					id: 'a1',
+					name: 'Beachfront Resort (2 nights)',
+					price: 8000,
+					paidById: 'p1',
+					paidByName: 'Mika',
+					createdAt: '2026-06-06T14:00:00',
+					updatedAt: '2026-06-06T14:05:00',
+					settled: true
+				},
+				{
+					id: 'a2',
+					name: 'Island Hopping Tour',
+					price: 3600,
+					paidById: 'p2',
+					paidByName: 'Jomar',
+					createdAt: '2026-06-07T08:30:00'
+				},
+				{
+					id: 'a3',
+					name: 'Tricycles & Transpo',
+					price: 1200,
+					paidById: 'p4',
+					paidByName: 'Paolo',
+					createdAt: '2026-06-07T09:10:00'
+				},
+				{
+					id: 'a4',
+					name: 'Dinner — Real Coffee & Tea',
+					price: 2400,
+					paidById: 'p3',
+					paidByName: 'Andrea',
+					createdAt: '2026-06-07T20:10:00',
+					updatedAt: '2026-06-07T20:45:00'
+				},
+				{
+					id: 'a5',
+					name: 'Parasailing (2 pax)',
+					price: 5000,
+					paidById: 'p1',
+					paidByName: 'Mika',
+					createdAt: '2026-06-08T11:00:00'
+				},
+				{
+					id: 'a6',
+					name: 'Sunset Bar Tab',
+					price: 2800,
+					paidById: 'p2',
+					paidByName: 'Jomar',
+					createdAt: '2026-06-08T18:45:00',
+					updatedAt: '2026-06-08T19:02:00'
+				}
 			]
 		},
 		{
@@ -72,39 +144,80 @@
 				{ id: 'p7', name: 'Lia' }
 			],
 			activities: [
-				{ price: 1500, paidById: 'p6' },
-				{ price: 1800, paidById: 'p5' },
-				{ price: 900, paidById: 'p7' }
+				{
+					id: 'a7',
+					name: 'Gas & SLEX Toll',
+					price: 1500,
+					paidById: 'p6',
+					paidByName: 'Jomar',
+					createdAt: '2026-06-01T07:00:00'
+				},
+				{
+					id: 'a8',
+					name: 'Bulalohan Lunch',
+					price: 1800,
+					paidById: 'p5',
+					paidByName: 'Mika',
+					createdAt: '2026-06-01T13:00:00'
+				},
+				{
+					id: 'a9',
+					name: 'Coffee — Bag of Beans',
+					price: 900,
+					paidById: 'p7',
+					paidByName: 'Lia',
+					createdAt: '2026-06-01T16:00:00'
+				}
 			]
 		}
 	]);
 
-	const demoActivities = [
-		{
-			name: 'Beachfront Resort (2 nights)',
-			price: 8000,
-			paidByName: 'Mika',
-			createdAt: '2026-06-06T14:00:00',
-			updatedAt: '2026-06-06T14:05:00',
-			eventTitle: 'Boracay Getaway'
-		},
-		{
-			name: 'Island Hopping Tour',
-			price: 3600,
-			paidByName: 'Jomar',
-			createdAt: '2026-06-07T08:30:00',
-			eventTitle: 'Boracay Getaway'
-		},
-		{
-			name: 'Gas & SLEX Toll',
-			price: 1500,
-			paidByName: 'Jomar',
-			createdAt: '2026-06-01T07:00:00',
-			eventTitle: 'Tagaytay Roadtrip'
-		}
-	] as const;
-
 	const detailEvent = $derived(events.find((e) => e.id === detailEventId) ?? null);
+
+	const payEvent = $derived.by(() => {
+		if (payEventId) return events.find((e) => e.id === payEventId) ?? null;
+		if (payActivityId) {
+			return events.find((e) => e.activities.some((a) => a.id === payActivityId)) ?? null;
+		}
+		return null;
+	});
+
+	const payActivity = $derived(
+		payEvent && payActivityId
+			? (payEvent.activities.find((a) => a.id === payActivityId) ?? null)
+			: null
+	);
+
+	const inSubScreen = $derived(!!detailEventId || !!payEventId || !!payActivityId);
+
+	const appBar = $derived.by(() => {
+		if (payActivity && payEvent) {
+			return {
+				title: payEvent.title,
+				subtitle: 'Receipt to screenshot & share',
+				back: true
+			};
+		}
+		if (payEventId && payEvent) {
+			return {
+				title: payEvent.title,
+				subtitle: 'Pick an expense to settle',
+				back: true
+			};
+		}
+		if (detailEvent) {
+			return {
+				title: detailEvent.title,
+				subtitle: 'Participants & balances',
+				back: true
+			};
+		}
+		return {
+			title: 'Welcome to Beezy',
+			subtitle: 'Split trips, stay friends',
+			back: false
+		};
+	});
 
 	function showToast(message: string) {
 		toastMessage = message;
@@ -119,26 +232,60 @@
 	};
 
 	const fabVisible = $derived(
-		!sheetOpen &&
-			!detailEventId &&
-			!showEmpty &&
-			(tab === 'events' || tab === 'activities')
+		!sheetOpen && !inSubScreen && !showEmpty && (tab === 'events' || tab === 'activities')
 	);
 
 	function closeMenu() {
 		menuOpen = false;
 	}
 
+	function clearSubScreens() {
+		detailEventId = null;
+		payEventId = null;
+		payActivityId = null;
+	}
+
+	function handleBack() {
+		if (payActivityId) {
+			payActivityId = null;
+			return;
+		}
+		if (payEventId) {
+			payEventId = null;
+			return;
+		}
+		detailEventId = null;
+	}
+
 	function openEvent(id: string) {
+		clearSubScreens();
 		detailEventId = id;
 	}
 
-	function backFromDetail() {
-		detailEventId = null;
+	function openPayEvent(id: string) {
+		clearSubScreens();
+		tab = 'payment';
+		payEventId = id;
+	}
+
+	function openPayActivity(activityId: string) {
+		payActivityId = activityId;
 	}
 
 	function updateEvent(id: string, patch: Partial<DemoEvent>) {
 		events = events.map((e) => (e.id === id ? { ...e, ...patch } : e));
+	}
+
+	function toggleActivitySettled(eventId: string, activityId: string, settled: boolean) {
+		updateEvent(eventId, {
+			activities: events
+				.find((e) => e.id === eventId)!
+				.activities.map((a) =>
+					a.id === activityId
+						? { ...a, settled, updatedAt: new Date().toISOString() }
+						: a
+				)
+		});
 	}
 
 	function eventCardProps(ev: DemoEvent) {
@@ -152,41 +299,46 @@
 			spent: totals.total
 		};
 	}
+
+	function payCardProps(ev: DemoEvent) {
+		const totals = calcEvent(ev.participants, ev.activities);
+		return {
+			title: ev.title,
+			summary: payEventSummary(ev.activities, ev.participants.length, totals.total),
+			settled: isEventSettled(ev.activities)
+		};
+	}
+
+	function allActivitiesFlat() {
+		return events.flatMap((ev) =>
+			ev.activities.map((a) => ({
+				...a,
+				eventTitle: ev.title
+			}))
+		);
+	}
 </script>
 
 <AppShell>
-	{#if detailEvent}
-		<AppBar title={detailEvent.title} subtitle="Participants & balances">
-			{#snippet leading()}
-				<IconButton aria-label="Back" onclick={backFromDetail}>
+	<AppBar title={appBar.title} subtitle={appBar.subtitle}>
+		{#snippet leading()}
+			{#if appBar.back}
+				<IconButton aria-label="Back" onclick={handleBack}>
 					<Icon name="back" class="back-arrow" />
 				</IconButton>
-			{/snippet}
-			{#snippet brand()}🤗{/snippet}
-			{#snippet trailing()}
-				<IconButton
-					aria-label="More"
-					class="menu-trigger"
-					onclick={() => (menuOpen = !menuOpen)}
-				>
-					<Icon name="more" />
-				</IconButton>
-			{/snippet}
-		</AppBar>
-	{:else}
-		<AppBar title="Welcome to Beezy" subtitle="Split trips, stay friends">
-			{#snippet brand()}🤗{/snippet}
-			{#snippet trailing()}
-				<IconButton
-					aria-label="More"
-					class="menu-trigger"
-					onclick={() => (menuOpen = !menuOpen)}
-				>
-					<Icon name="more" />
-				</IconButton>
-			{/snippet}
-		</AppBar>
-	{/if}
+			{/if}
+		{/snippet}
+		{#snippet brand()}🤗{/snippet}
+		{#snippet trailing()}
+			<IconButton
+				aria-label="More"
+				class="menu-trigger"
+				onclick={() => (menuOpen = !menuOpen)}
+			>
+				<Icon name="more" />
+			</IconButton>
+		{/snippet}
+	</AppBar>
 
 	<Screen>
 		{#if detailEvent}
@@ -205,24 +357,102 @@
 					});
 				}}
 				onaddexpense={() => showToast('Add expense — Phase 6')}
-				onsettleup={() => showToast('Settle up — Phase 7')}
+				onsettleup={() => openPayEvent(detailEvent.id)}
 				ondelete={() => {
 					events = events.filter((e) => e.id !== detailEvent.id);
-					backFromDetail();
+					clearSubScreens();
 					showToast('Event deleted');
 				}}
 			/>
+		{:else if payActivity && payEvent}
+			<Receipt eventTitle={payEvent.title} activity={payActivity} participants={payEvent.participants} />
+			<div class="receipt-actions">
+				{#if payActivity.settled}
+					<Button
+						variant="secondary"
+						block
+						onclick={() => {
+							toggleActivitySettled(payEvent.id, payActivity.id, false);
+							showToast('Marked unpaid');
+						}}
+					>
+						Mark unpaid
+					</Button>
+					<Button variant="ghost" block onclick={() => showToast('Copied to clipboard')}>
+						<Icon name="copy" />
+						Copy receipt text
+					</Button>
+				{:else}
+					<Button
+						variant="yellow"
+						block
+						onclick={() => {
+							toggleActivitySettled(payEvent.id, payActivity.id, true);
+							showToast('Marked as settled');
+						}}
+					>
+						<Icon name="check" />
+						Settle this expense
+					</Button>
+					<Button variant="ghost" block onclick={() => showToast('Copied to clipboard')}>
+						<Icon name="copy" />
+						Copy receipt text
+					</Button>
+				{/if}
+			</div>
+		{:else if payEvent}
+			{@const totals = calcEvent(payEvent.participants, payEvent.activities)}
+			{@const settledCount = payEvent.activities.filter((a) => a.settled).length}
+			{@const allSettled = isEventSettled(payEvent.activities)}
+			{@const pct = payEvent.activities.length
+				? Math.round((settledCount / payEvent.activities.length) * 100)
+				: 0}
+
+			<PayProgress
+				label={payEvent.title}
+				detail="{settledCount} of {payEvent.activities.length} settled · {peso(totals.total)} total"
+				value={pct}
+				done={allSettled}
+			/>
+
+			{#if allSettled}
+				<HintCard emoji="✅">
+					Everyone's square on <strong>{payEvent.title}</strong>. Tap any expense to reopen its
+					receipt, or mark one unpaid.
+				</HintCard>
+			{/if}
+
+			{#each payEvent.activities as activity (activity.id)}
+				{@const ac = calcActivity(activity, payEvent.participants)}
+				{@const each = ac.n > 0 ? peso(ac.share) : '—'}
+				<ActivityRow
+					name={activity.name}
+					price={activity.price}
+					paidByName={activity.paidByName}
+					createdAt={activity.createdAt}
+					updatedAt={activity.updatedAt}
+					variant="payment"
+					settled={activity.settled}
+					oweLabel={ac.others.length ? `${ac.others.length} owe ${each} each` : 'solo expense'}
+					statusLabel={activity.settled
+						? `settled ${fmtDate(activity.updatedAt ?? activity.createdAt)}`
+						: 'tap to settle →'}
+					onclick={() => openPayActivity(activity.id)}
+				/>
+			{/each}
 		{:else}
-			<Eyebrow accent>Phase 3 — Event detail</Eyebrow>
+			<Eyebrow accent>Phase 3 — Payment</Eyebrow>
 			<ScreenHead
 				title={tabLabels[tab]}
-				description="Tap an event card to open the detail screen with live participant editing."
+				description={tab === 'payment'
+					? 'Pick a trip to generate a receipt everyone can screenshot and share.'
+					: tab === 'events'
+						? 'Tap an event card to open the detail screen.'
+						: 'Every expense, who paid, and when.'}
 			/>
 
 			{#if tab === 'events'}
-				<label
-					style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: var(--text-sm)"
-				>
+				<label class="demo-toggle">
 					<input type="checkbox" bind:checked={showEmpty} />
 					Show empty state
 				</label>
@@ -245,10 +475,18 @@
 					{/each}
 				{/if}
 			{:else if tab === 'activities'}
-				{#each demoActivities as act (act.name)}
-					<ActivityRow {...act} onclick={() => showToast(`Edit ${act.name}`)} />
+				{#each allActivitiesFlat() as act (act.id)}
+					<ActivityRow
+						name={act.name}
+						price={act.price}
+						paidByName={act.paidByName}
+						createdAt={act.createdAt}
+						updatedAt={act.updatedAt}
+						eventTitle={act.eventTitle}
+						onclick={() => showToast(`Edit ${act.name}`)}
+					/>
 				{/each}
-			{:else}
+			{:else if events.length === 0}
 				<EmptyState
 					emoji="🧾"
 					title="Nothing to settle yet"
@@ -258,15 +496,10 @@
 						<Button variant="yellow" onclick={() => (tab = 'events')}>Create an event</Button>
 					{/snippet}
 				</EmptyState>
-				<div style="margin-top: 24px">
-					<Eyebrow>ProgressBar variants</Eyebrow>
-					<ProgressBar
-						class="mt-2"
-						value={72}
-						labelLeft="72% of budget"
-						labelRight="₱6,600 left"
-					/>
-				</div>
+			{:else}
+				{#each events as ev (ev.id)}
+					<PayEventCard {...payCardProps(ev)} onclick={() => openPayEvent(ev.id)} />
+				{/each}
 			{/if}
 		{/if}
 	</Screen>
@@ -278,9 +511,9 @@
 	<TabBar>
 		<Tab
 			label="Activities"
-			active={tab === 'activities' && !detailEventId}
+			active={tab === 'activities' && !inSubScreen}
 			onclick={() => {
-				detailEventId = null;
+				clearSubScreens();
 				tab = 'activities';
 			}}
 		>
@@ -288,9 +521,9 @@
 		</Tab>
 		<Tab
 			label="Events"
-			active={tab === 'events' && !detailEventId}
+			active={tab === 'events' && !inSubScreen}
 			onclick={() => {
-				detailEventId = null;
+				clearSubScreens();
 				tab = 'events';
 			}}
 		>
@@ -298,9 +531,9 @@
 		</Tab>
 		<Tab
 			label="Payment"
-			active={tab === 'payment' && !detailEventId}
+			active={tab === 'payment' && !inSubScreen}
 			onclick={() => {
-				detailEventId = null;
+				clearSubScreens();
 				tab = 'payment';
 			}}
 		>
@@ -362,7 +595,11 @@
 </AppShell>
 
 <style>
-	:global(.mt-2) {
-		margin-top: 11px;
+	.demo-toggle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
+		font-size: var(--text-sm);
 	}
 </style>

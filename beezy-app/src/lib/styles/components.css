@@ -362,3 +362,338 @@
 	font-size: 12px;
 	margin-top: 8px;
 }
+
+/* Payment / receipt */
+.pay-event-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	text-align: left;
+	padding: 14px 15px;
+	margin-bottom: 10px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+.pay-event-card:hover {
+	border-color: var(--fg);
+}
+
+.pay-event-card .ri {
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-md);
+	background: var(--surface-warm);
+	display: grid;
+	place-items: center;
+	flex: 0 0 auto;
+}
+
+.pay-event-card .ri :global(svg) {
+	width: 20px;
+	height: 20px;
+	stroke: var(--fg);
+	fill: none;
+	stroke-width: 1.7;
+}
+
+.pay-event-card .rt {
+	flex: 1;
+	min-width: 0;
+}
+
+.pay-event-card .rt h3 {
+	font-size: var(--text-base);
+	font-weight: 600;
+}
+
+.pay-event-card .rt p {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--muted);
+	margin-top: 2px;
+}
+
+.pay-event-card .chev {
+	color: var(--muted);
+	flex: 0 0 auto;
+}
+
+.pay-event-card .chev :global(svg) {
+	width: 20px;
+	height: 20px;
+}
+
+.pay-event-card.is-settled {
+	border-color: color-mix(in oklab, var(--success) 38%, var(--border));
+	background: color-mix(in oklab, var(--success) 4%, var(--surface));
+}
+
+.pay-event-card .ri-done {
+	background: color-mix(in oklab, var(--success) 16%, white);
+}
+
+.pay-event-card .ri-done :global(svg) {
+	stroke: var(--success);
+}
+
+.pay-progress {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 13px 14px;
+	margin-bottom: 14px;
+}
+
+.pay-progress-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.pay-progress .pp-label {
+	font-family: var(--font-mono);
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.pay-progress .pp-val {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
+	margin-top: 2px;
+}
+
+.pay-progress .pp-pct {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--fg);
+}
+
+.pay-progress .pp-pct.done {
+	color: var(--success);
+}
+
+.pay-progress .progress-track {
+	margin-top: 10px;
+}
+
+.pay-act.is-settled {
+	background: color-mix(in oklab, var(--success) 4%, var(--surface));
+	border-color: color-mix(in oklab, var(--success) 30%, var(--border));
+}
+
+.pay-act.is-settled .act-name .act-title {
+	color: var(--muted);
+	text-decoration: line-through;
+	text-decoration-color: color-mix(in oklab, var(--muted) 55%, transparent);
+}
+
+.pay-act.is-settled .act-price {
+	color: var(--muted);
+}
+
+.receipt {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+	position: relative;
+}
+
+.receipt-strip {
+	height: 5px;
+	background: var(--accent);
+}
+
+.receipt-done .receipt-strip {
+	background: var(--success);
+}
+
+.receipt-body {
+	padding: 18px 18px 4px;
+}
+
+.receipt-head {
+	text-align: center;
+	padding-bottom: 12px;
+	border-bottom: 1px dashed var(--border);
+}
+
+.receipt-head .r-brand {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: var(--text-xl);
+	letter-spacing: 0.02em;
+}
+
+.receipt-head .r-title {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--muted);
+	margin-top: 2px;
+}
+
+.receipt-head .r-activity {
+	font-family: var(--font-body);
+	font-size: var(--text-lg);
+	font-weight: 600;
+	color: var(--fg);
+	margin-top: 4px;
+}
+
+.receipt-head .r-date {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
+	margin-top: 6px;
+}
+
+.receipt-head .r-settled {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 11px;
+	padding: 4px 10px;
+	border-radius: var(--radius-pill);
+	background: color-mix(in oklab, var(--success) 14%, white);
+	color: var(--success);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.receipt-head .r-settled :global(svg) {
+	width: 13px;
+	height: 13px;
+	stroke: var(--success);
+}
+
+.r-line {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	padding: 4px 0;
+}
+
+.r-line .k {
+	color: var(--muted);
+}
+
+.r-line .v {
+	font-weight: 600;
+}
+
+.r-line.r-paidby .v {
+	display: inline-flex;
+	align-items: center;
+}
+
+.r-line.r-total {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px dashed var(--border);
+}
+
+.r-line .r-big {
+	font-size: 16px;
+}
+
+.r-divider {
+	border: 0;
+	border-top: 1px dashed var(--border);
+	margin: 10px 0;
+}
+
+.r-section-title {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--fg);
+	margin: 4px 0 6px;
+	font-weight: 600;
+}
+
+.r-member {
+	display: grid;
+	grid-template-columns: 22px 1fr auto;
+	gap: 9px;
+	align-items: center;
+	padding: 7px 0;
+	font-family: var(--font-mono);
+	font-size: 12.5px;
+	border-bottom: 1px dashed var(--border-soft);
+}
+
+.r-member:last-child {
+	border-bottom: 0;
+}
+
+.r-member .nm {
+	font-weight: 600;
+}
+
+.r-member .det {
+	font-size: 11px;
+	color: var(--muted);
+	margin-top: 1px;
+}
+
+.r-member .bal {
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.receipt-foot {
+	text-align: center;
+	padding: 12px 18px 16px;
+}
+
+.receipt-foot .r-thanks {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg);
+	font-weight: 600;
+}
+
+.receipt-foot .r-meta {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	color: var(--muted);
+	margin-top: 3px;
+}
+
+.receipt-tear {
+	height: 9px;
+	background: var(--surface);
+	-webkit-mask: radial-gradient(5px 5px at 5px -1px, var(--fg) 99%, transparent 100%)
+		repeat-x;
+	-webkit-mask-size: 10px 9px;
+	mask: radial-gradient(5px 5px at 5px -1px, var(--fg) 99%, transparent 100%) repeat-x;
+	mask-size: 10px 9px;
+	border-top: 1px dashed var(--border);
+}
+
+.receipt-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.receipt-lines {
+	margin-top: 12px;
+}
+
+.receipt-collect-note {
+	font-size: 11px;
+	margin-top: 6px;
+}
+
