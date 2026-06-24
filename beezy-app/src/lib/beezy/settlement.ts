@@ -1,31 +1,13 @@
+import type {
+	ActivityBreakdown,
+	ActivityLike,
+	EventTallyResult,
+	Participant,
+	TallyResult
+} from '$lib/beezy/types';
 import { peso } from '$lib/kkb/format';
 
-export interface Participant {
-	id: string;
-	name: string;
-}
-
-/** Minimal activity fields needed for settlement math. */
-export interface ActivityLike {
-	price: number;
-	paidById: string;
-	settled?: boolean;
-}
-
-export interface TallyRow {
-	id: string;
-	name: string;
-	paid: number;
-	share: number;
-	balance: number;
-}
-
-export interface TallyResult {
-	total: number;
-	n: number;
-	share: number;
-	rows: TallyRow[];
-}
+export type { ActivityBreakdown, ActivityLike, EventTallyResult, Participant, TallyResult };
 
 /** Equal-split tally for a list of activities against participants. */
 export function tally(acts: ActivityLike[], participants: Participant[]): TallyResult {
@@ -52,7 +34,7 @@ export function tally(acts: ActivityLike[], participants: Participant[]): TallyR
 export function calcEvent(
 	participants: Participant[],
 	activities: ActivityLike[]
-): TallyResult & { activities: ActivityLike[] } {
+): EventTallyResult {
 	return { ...tally(activities, participants), activities };
 }
 
@@ -86,7 +68,7 @@ export function payEventSummary(
 }
 
 /** Per-expense breakdown: who paid and what each other member owes. */
-export function calcActivity(activity: ActivityLike, participants: Participant[]) {
+export function calcActivity(activity: ActivityLike, participants: Participant[]): ActivityBreakdown {
 	const total = Number(activity.price || 0);
 	const n = participants.length;
 	const share = n > 0 ? total / n : 0;

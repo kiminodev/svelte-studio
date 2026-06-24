@@ -3,7 +3,8 @@
 		calcActivity,
 		calcEvent,
 		isEventSettled,
-		payEventSummary
+		payEventSummary,
+		type Participant
 	} from '$lib/kkb/settlement';
 	import { fmtDate, peso } from '$lib/kkb/format';
 	import {
@@ -344,16 +345,16 @@
 		{#if detailEvent}
 			<EventDetail
 				event={detailEvent}
-				onaddparticipant={(name) => {
+				onaddparticipant={(name: string) => {
 					updateEvent(detailEvent.id, {
 						participants: [...detailEvent.participants, { id: uid(), name }]
 					});
 					showToast(`Added ${name}`);
 				}}
 				onfinishparticipants={() => showToast('Participants saved')}
-				onremoveparticipant={(id) => {
+				onremoveparticipant={(id: string) => {
 					updateEvent(detailEvent.id, {
-						participants: detailEvent.participants.filter((p) => p.id !== id)
+						participants: detailEvent.participants.filter((p: Participant) => p.id !== id)
 					});
 				}}
 				onaddexpense={() => showToast('Add expense — Phase 6')}
