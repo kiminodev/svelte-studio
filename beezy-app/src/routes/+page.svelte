@@ -33,7 +33,7 @@
 		TabBar,
 		Toast,
 		scheduleToastHide
-	} from '$lib/components/ui';
+	} from '$lib';
 
 	type TabId = 'activities' | 'events' | 'payment';
 

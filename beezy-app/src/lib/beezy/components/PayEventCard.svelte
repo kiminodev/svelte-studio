@@ -1,6 +1,5 @@
 <script lang="ts">
-	import Icon from '$lib/components/ui/icons/Icon.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { Icon, cn } from '$lib/components';
 
 	interface Props {
 		title: string;

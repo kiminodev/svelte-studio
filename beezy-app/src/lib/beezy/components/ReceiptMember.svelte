@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { peso } from '$lib/beezy/format';
-	import Avatar from '$lib/components/ui/Avatar.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { Avatar, cn } from '$lib/components';
 
 	interface Props {
 		name: string;

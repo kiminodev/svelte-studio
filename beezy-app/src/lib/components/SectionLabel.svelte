@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import Eyebrow from '$lib/components/ui/Eyebrow.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import Eyebrow from '$lib/components/Eyebrow.svelte';
+	import { cn } from '$lib/components/cn';
 
 	interface Props {
 		left: string;

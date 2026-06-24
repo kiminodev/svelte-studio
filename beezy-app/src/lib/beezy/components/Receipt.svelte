@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { fmtDateTime, peso } from '$lib/beezy/format';
 	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
-	import Avatar from '$lib/components/ui/Avatar.svelte';
-	import Icon from '$lib/components/ui/icons/Icon.svelte';
-	import ReceiptLine from '$lib/components/ui/ReceiptLine.svelte';
-	import ReceiptMember from '$lib/components/ui/ReceiptMember.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { Avatar, Icon, cn } from '$lib/components';
+	import ReceiptLine from './ReceiptLine.svelte';
+	import ReceiptMember from './ReceiptMember.svelte';
 
 	export interface ReceiptActivity extends ActivityLike {
 		name: string;

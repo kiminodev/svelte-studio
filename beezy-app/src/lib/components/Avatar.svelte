@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { avatarIndex, initials } from '$lib/beezy/utils';
-	import { cn } from '$lib/components/ui/cn';
+	import { cn } from '$lib/components/cn';
 
 	type Size = 'sm' | 'default' | 'md' | 'lg';
 

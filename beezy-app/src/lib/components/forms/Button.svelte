@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { cn } from '$lib/components/cn';
 
 	type Variant = 'primary' | 'yellow' | 'secondary' | 'ghost' | 'danger';
 	type Size = 'default' | 'sm';

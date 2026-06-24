@@ -1,6 +1,5 @@
 <script lang="ts">
-	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { ProgressBar, cn } from '$lib/components';
 
 	interface Props {
 		label: string;

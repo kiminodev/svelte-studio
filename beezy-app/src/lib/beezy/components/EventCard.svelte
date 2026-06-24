@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { peso, fmtDate } from '$lib/beezy/format';
-	import Eyebrow from '$lib/components/ui/Eyebrow.svelte';
-	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { Eyebrow, ProgressBar, cn } from '$lib/components';
 
 	interface Props {
 		title: string;

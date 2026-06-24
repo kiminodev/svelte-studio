@@ -1,4 +1,5 @@
-export * from './components/ui';
+export * from './components';
+export * from './beezy/components';
 export * from './beezy/id';
 export * from './beezy/types';
 export * from './beezy/format';

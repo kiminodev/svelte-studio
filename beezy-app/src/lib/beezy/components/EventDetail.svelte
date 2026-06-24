@@ -8,15 +8,17 @@
 		type ActivityLike,
 		type Participant
 	} from '$lib/beezy/settlement';
-	import AddParticipantRow from '$lib/components/ui/AddParticipantRow.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Divider from '$lib/components/ui/Divider.svelte';
-	import HintCard from '$lib/components/ui/HintCard.svelte';
-	import Icon from '$lib/components/ui/icons/Icon.svelte';
-	import ParticipantRow from '$lib/components/ui/ParticipantRow.svelte';
-	import SectionLabel from '$lib/components/ui/SectionLabel.svelte';
-	import StatCell from '$lib/components/ui/StatCell.svelte';
-	import StatGrid from '$lib/components/ui/StatGrid.svelte';
+	import AddParticipantRow from './AddParticipantRow.svelte';
+	import ParticipantRow from './ParticipantRow.svelte';
+	import {
+		Button,
+		Divider,
+		HintCard,
+		Icon,
+		SectionLabel,
+		StatCell,
+		StatGrid
+	} from '$lib/components';
 
 	export interface EventDetailData {
 		id: string;

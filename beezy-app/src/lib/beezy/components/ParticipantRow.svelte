@@ -4,9 +4,7 @@
 		balanceStatus,
 		balanceVariant
 	} from '$lib/beezy/settlement';
-	import Avatar from '$lib/components/ui/Avatar.svelte';
-	import Icon from '$lib/components/ui/icons/Icon.svelte';
-	import { cn } from '$lib/components/ui/cn';
+	import { Avatar, Icon, cn } from '$lib/components';
 
 	interface Props {
 		name: string;

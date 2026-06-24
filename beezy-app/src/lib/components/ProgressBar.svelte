@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from '$lib/components/ui/cn';
+	import { cn } from '$lib/components/cn';
 
 	type Variant = 'default' | 'over' | 'done';
 
