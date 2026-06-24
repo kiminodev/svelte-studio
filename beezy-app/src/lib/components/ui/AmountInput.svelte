@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from '$lib/ui/cn';
+	import { cn } from '$lib/components/ui/cn';
 
 	interface Props {
 		id?: string;

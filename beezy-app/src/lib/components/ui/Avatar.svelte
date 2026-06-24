@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { avatarIndex, initials } from '$lib/kkb/utils';
-	import { cn } from '$lib/ui/cn';
+	import { avatarIndex, initials } from '$lib/beezy/utils';
+	import { cn } from '$lib/components/ui/cn';
 
 	type Size = 'sm' | 'default' | 'md' | 'lg';
 

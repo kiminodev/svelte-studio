@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { peso, fmtDate } from '$lib/kkb/format';
-	import Eyebrow from '$lib/ui/Eyebrow.svelte';
-	import ProgressBar from '$lib/ui/ProgressBar.svelte';
-	import { cn } from '$lib/ui/cn';
+	import { peso, fmtDate } from '$lib/beezy/format';
+	import Eyebrow from '$lib/components/ui/Eyebrow.svelte';
+	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+	import { cn } from '$lib/components/ui/cn';
 
 	interface Props {
 		title: string;

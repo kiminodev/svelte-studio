@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { fmtDateTime, peso } from '$lib/kkb/format';
-	import { calcActivity, type ActivityLike, type Participant } from '$lib/kkb/settlement';
-	import Avatar from '$lib/ui/Avatar.svelte';
-	import Icon from '$lib/ui/icons/Icon.svelte';
-	import ReceiptLine from '$lib/ui/ReceiptLine.svelte';
-	import ReceiptMember from '$lib/ui/ReceiptMember.svelte';
-	import { cn } from '$lib/ui/cn';
+	import { fmtDateTime, peso } from '$lib/beezy/format';
+	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import Icon from '$lib/components/ui/icons/Icon.svelte';
+	import ReceiptLine from '$lib/components/ui/ReceiptLine.svelte';
+	import ReceiptMember from '$lib/components/ui/ReceiptMember.svelte';
+	import { cn } from '$lib/components/ui/cn';
 
 	export interface ReceiptActivity extends ActivityLike {
 		name: string;

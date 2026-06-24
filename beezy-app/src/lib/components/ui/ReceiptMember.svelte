@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { peso } from '$lib/kkb/format';
-	import Avatar from '$lib/ui/Avatar.svelte';
-	import { cn } from '$lib/ui/cn';
+	import { peso } from '$lib/beezy/format';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { cn } from '$lib/components/ui/cn';
 
 	interface Props {
 		name: string;

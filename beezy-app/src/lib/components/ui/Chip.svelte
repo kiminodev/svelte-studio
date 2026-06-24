@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/ui/cn';
+	import { cn } from '$lib/components/ui/cn';
 
 	type Variant = 'paid' | 'event' | 'settled' | 'default';
 

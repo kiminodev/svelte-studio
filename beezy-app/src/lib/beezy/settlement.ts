@@ -5,7 +5,7 @@ import type {
 	Participant,
 	TallyResult
 } from '$lib/beezy/types';
-import { peso } from '$lib/kkb/format';
+import { peso } from '$lib/beezy/format';
 
 export type { ActivityBreakdown, ActivityLike, EventTallyResult, Participant, TallyResult };
 

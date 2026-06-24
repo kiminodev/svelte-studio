@@ -5,8 +5,8 @@
 		isEventSettled,
 		payEventSummary,
 		type Participant
-	} from '$lib/kkb/settlement';
-	import { fmtDate, peso } from '$lib/kkb/format';
+	} from '$lib/beezy/settlement';
+	import { fmtDate, peso } from '$lib/beezy/format';
 	import {
 		ActivityRow,
 		AppBar,
@@ -33,7 +33,7 @@
 		TabBar,
 		Toast,
 		scheduleToastHide
-	} from '$lib/ui';
+	} from '$lib/components/ui';
 
 	type TabId = 'activities' | 'events' | 'payment';
 

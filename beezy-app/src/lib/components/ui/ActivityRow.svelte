@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { fmtDate, peso } from '$lib/kkb/format';
-	import Avatar from '$lib/ui/Avatar.svelte';
-	import Chip from '$lib/ui/Chip.svelte';
-	import { cn } from '$lib/ui/cn';
+	import { fmtDate, peso } from '$lib/beezy/format';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import Chip from '$lib/components/ui/Chip.svelte';
+	import { cn } from '$lib/components/ui/cn';
 
 	interface Props {
 		name: string;

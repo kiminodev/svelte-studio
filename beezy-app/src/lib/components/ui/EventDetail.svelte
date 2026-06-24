@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peso } from '$lib/kkb/format';
+	import { peso } from '$lib/beezy/format';
 	import {
 		canRemoveParticipant,
 		calcEvent,
@@ -7,16 +7,16 @@
 		isEventSettled,
 		type ActivityLike,
 		type Participant
-	} from '$lib/kkb/settlement';
-	import AddParticipantRow from '$lib/ui/AddParticipantRow.svelte';
-	import Button from '$lib/ui/Button.svelte';
-	import Divider from '$lib/ui/Divider.svelte';
-	import HintCard from '$lib/ui/HintCard.svelte';
-	import Icon from '$lib/ui/icons/Icon.svelte';
-	import ParticipantRow from '$lib/ui/ParticipantRow.svelte';
-	import SectionLabel from '$lib/ui/SectionLabel.svelte';
-	import StatCell from '$lib/ui/StatCell.svelte';
-	import StatGrid from '$lib/ui/StatGrid.svelte';
+	} from '$lib/beezy/settlement';
+	import AddParticipantRow from '$lib/components/ui/AddParticipantRow.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Divider from '$lib/components/ui/Divider.svelte';
+	import HintCard from '$lib/components/ui/HintCard.svelte';
+	import Icon from '$lib/components/ui/icons/Icon.svelte';
+	import ParticipantRow from '$lib/components/ui/ParticipantRow.svelte';
+	import SectionLabel from '$lib/components/ui/SectionLabel.svelte';
+	import StatCell from '$lib/components/ui/StatCell.svelte';
+	import StatGrid from '$lib/components/ui/StatGrid.svelte';
 
 	export interface EventDetailData {
 		id: string;

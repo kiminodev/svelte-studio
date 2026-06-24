@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { peso, pesoSigned } from '$lib/kkb/format';
+	import { peso, pesoSigned } from '$lib/beezy/format';
 	import {
 		balanceStatus,
 		balanceVariant
-	} from '$lib/kkb/settlement';
-	import Avatar from '$lib/ui/Avatar.svelte';
-	import Icon from '$lib/ui/icons/Icon.svelte';
-	import { cn } from '$lib/ui/cn';
+	} from '$lib/beezy/settlement';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import Icon from '$lib/components/ui/icons/Icon.svelte';
+	import { cn } from '$lib/components/ui/cn';
 
 	interface Props {
 		name: string;
