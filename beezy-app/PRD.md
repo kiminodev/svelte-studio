@@ -159,8 +159,8 @@ Reusable building blocks for all three main tabs.
 | `EventCard` | `.event-card` | [x] |
 | `ProgressBar` | `.progress` | [x] |
 | `ActivityRow` | `.act-row` | [x] |
-| `PayEventCard` | `.pay-event-card` | [ ] |
-| `PayProgress` | `.pay-progress` | [ ] |
+| `PayEventCard` | `.pay-event-card` | [x] |
+| `PayProgress` | `.pay-progress` | [x] |
 | `StatGrid` / `StatCell` | `.summary-grid`, `.stat-cell` | [x] |
 | `ParticipantRow` | `.pax-row` | [x] |
 | `SectionLabel` | `.section-label` | [x] |
@@ -168,9 +168,9 @@ Reusable building blocks for all three main tabs.
 | `AddParticipantRow` | `.add-pax` | [x] |
 | `Divider` | `.divider-rule` | [x] |
 | `EventDetail` | `viewEventDetail()` | [x] |
-| `Receipt` | `.receipt` | [ ] |
-| `ReceiptLine` | `.r-line` | [ ] |
-| `ReceiptMember` | `.r-member` | [ ] |
+| `Receipt` | `.receipt` | [x] |
+| `ReceiptLine` | `.r-line` | [x] |
+| `ReceiptMember` | `.r-member` | [x] |
 
 ### CSS source
 
@@ -185,8 +185,7 @@ Consider `components.css` if `primitives.css` + `shell.css` grow too large.
 
 ### Exit criteria
 
-- [x] Kit page demos EventCard, ActivityRow, EmptyState with seed data
-- [ ] Kit page demos ParticipantRow, Receipt with seed data
+- [x] Kit page demos EventCard, ActivityRow, EmptyState, ParticipantRow, Receipt with seed data
 - Side-by-side visual match with mockup
 
 ---
