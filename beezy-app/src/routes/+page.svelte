@@ -290,7 +290,7 @@
 	}
 
 	function eventCardProps(ev: DemoEvent) {
-		const totals = calcEvent(ev.participants, ev.activities);
+		const totals = calcEvent(ev, ev.activities);
 		return {
 			title: ev.title,
 			createdAt: ev.createdAt,
@@ -302,11 +302,11 @@
 	}
 
 	function payCardProps(ev: DemoEvent) {
-		const totals = calcEvent(ev.participants, ev.activities);
+		const totals = calcEvent(ev, ev.activities);
 		return {
 			title: ev.title,
 			summary: payEventSummary(ev.activities, ev.participants.length, totals.total),
-			settled: isEventSettled(ev.activities)
+			settled: isEventSettled(ev, ev.activities)
 		};
 	}
 
@@ -402,9 +402,9 @@
 				{/if}
 			</div>
 		{:else if payEvent}
-			{@const totals = calcEvent(payEvent.participants, payEvent.activities)}
+			{@const totals = calcEvent(payEvent, payEvent.activities)}
 			{@const settledCount = payEvent.activities.filter((a) => a.settled).length}
-			{@const allSettled = isEventSettled(payEvent.activities)}
+			{@const allSettled = isEventSettled(payEvent, payEvent.activities)}
 			{@const pct = payEvent.activities.length
 				? Math.round((settledCount / payEvent.activities.length) * 100)
 				: 0}
@@ -424,7 +424,7 @@
 			{/if}
 
 			{#each payEvent.activities as activity (activity.id)}
-				{@const ac = calcActivity(activity, payEvent.participants)}
+				{@const ac = calcActivity(activity, payEvent)}
 				{@const each = ac.n > 0 ? peso(ac.share) : '—'}
 				<ActivityRow
 					name={activity.name}

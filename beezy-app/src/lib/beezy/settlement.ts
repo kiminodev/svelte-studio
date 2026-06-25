@@ -9,20 +9,33 @@ import { peso } from '$lib/beezy/format';
 
 export type { ActivityBreakdown, ActivityLike, EventTallyResult, Participant, TallyResult };
 
-/** Equal-split tally for a list of activities against participants. */
+/** Event slice required by settlement helpers (participants only). */
+export interface SettlementEvent {
+	participants: Participant[];
+}
+
+/**
+ * Equal-split tally for a list of activities against an event's participants.
+ *
+ * Rules:
+ * - share = total price ÷ participant count (0 when n = 0)
+ * - balance = amount paid − share (positive = is owed money)
+ *
+ * Payments from unknown payer IDs are ignored.
+ */
 export function tally(acts: ActivityLike[], participants: Participant[]): TallyResult {
 	const total = acts.reduce((sum, a) => sum + Number(a.price || 0), 0);
 	const n = participants.length;
 	const share = n > 0 ? total / n : 0;
 	const paidBy: Record<string, number> = {};
-	participants.forEach((p) => {
+	for (const p of participants) {
 		paidBy[p.id] = 0;
-	});
-	acts.forEach((a) => {
+	}
+	for (const a of acts) {
 		if (paidBy[a.paidById] != null) {
 			paidBy[a.paidById] += Number(a.price || 0);
 		}
-	});
+	}
 	const rows = participants.map((p) => {
 		const paid = paidBy[p.id] ?? 0;
 		return { id: p.id, name: p.name, paid, share, balance: paid - share };
@@ -30,25 +43,39 @@ export function tally(acts: ActivityLike[], participants: Participant[]): TallyR
 	return { total, n, share, rows };
 }
 
-/** Full trip totals — every expense, regardless of settlement. */
-export function calcEvent(
-	participants: Participant[],
-	activities: ActivityLike[]
-): EventTallyResult {
-	return { ...tally(activities, participants), activities };
+/**
+ * Full trip picture — every expense, regardless of settlement status.
+ * Matches mockup `calcEvent(ev)` when activities are passed explicitly.
+ */
+export function calcEvent(ev: SettlementEvent, activities: ActivityLike[]): EventTallyResult {
+	return { ...tally(activities, ev.participants), activities };
 }
 
-/** Outstanding balances using unsettled expenses only. */
-export function calcOutstanding(
-	participants: Participant[],
-	activities: ActivityLike[]
-): TallyResult {
+/**
+ * Outstanding balances using unsettled expenses only.
+ * Returns the unsettled activity list alongside tally totals.
+ */
+export function calcOutstanding(ev: SettlementEvent, activities: ActivityLike[]): EventTallyResult {
 	const unsettled = activities.filter((a) => !a.settled);
-	return tally(unsettled, participants);
+	return { ...tally(unsettled, ev.participants), activities: unsettled };
 }
 
-/** True when every activity is marked settled (and at least one exists). */
-export function isEventSettled(activities: ActivityLike[]): boolean {
+/**
+ * Per-expense breakdown: payer, equal share, and members who owe the payer.
+ */
+export function calcActivity(a: ActivityLike, ev: SettlementEvent): ActivityBreakdown {
+	const total = Number(a.price || 0);
+	const n = ev.participants.length;
+	const share = n > 0 ? total / n : 0;
+	const payer = ev.participants.find((p) => p.id === a.paidById) ?? null;
+	const others = ev.participants.filter((p) => p.id !== a.paidById);
+	return { total, n, share, payer, others };
+}
+
+/**
+ * True when the event has at least one activity and every one is marked settled.
+ */
+export function isEventSettled(_ev: SettlementEvent, activities: ActivityLike[]): boolean {
 	return activities.length > 0 && activities.every((a) => a.settled);
 }
 
@@ -59,22 +86,12 @@ export function payEventSummary(
 	totalSpent: number
 ): string {
 	const settledCount = activities.filter((a) => a.settled).length;
-	const allSettled = isEventSettled(activities);
+	const allSettled = activities.length > 0 && activities.every((a) => a.settled);
 	if (!activities.length) return `${participantCount} pax · no expenses yet`;
 	if (allSettled) {
 		return `All settled · ${peso(totalSpent)} spent · ${participantCount} pax`;
 	}
 	return `${settledCount}/${activities.length} settled · ${peso(totalSpent)} spent · ${participantCount} pax`;
-}
-
-/** Per-expense breakdown: who paid and what each other member owes. */
-export function calcActivity(activity: ActivityLike, participants: Participant[]): ActivityBreakdown {
-	const total = Number(activity.price || 0);
-	const n = participants.length;
-	const share = n > 0 ? total / n : 0;
-	const payer = participants.find((p) => p.id === activity.paidById) ?? null;
-	const others = participants.filter((p) => p.id !== activity.paidById);
-	return { total, n, share, payer, others };
 }
 
 /** Participant can be removed only if they have not paid for any expense. */
