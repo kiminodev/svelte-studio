@@ -5,4 +5,5 @@ export * from './beezy/types';
 export * from './beezy/format';
 export * from './beezy/settlement';
 export * from './beezy/activitySummary';
+export * from './beezy/db';
 export * from './beezy/utils';
