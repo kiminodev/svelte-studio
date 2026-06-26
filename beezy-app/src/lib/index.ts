@@ -8,4 +8,5 @@ export * from './beezy/activitySummary';
 export * from './beezy/db';
 export * from './beezy/seed';
 export * from './beezy/store';
+export * from './beezy/view';
 export * from './beezy/utils';
