@@ -50,10 +50,10 @@
 
 	let paxName = $state('');
 
-	const full = $derived(calcEvent(event.participants, event.activities));
-	const outstanding = $derived(calcOutstanding(event.participants, event.activities));
+	const full = $derived(calcEvent(event, event.activities));
+	const outstanding = $derived(calcOutstanding(event, event.activities));
 	const overBudget = $derived(full.total > event.budget);
-	const allSettled = $derived(isEventSettled(event.activities));
+	const allSettled = $derived(isEventSettled(event, event.activities));
 	const noParticipants = $derived(event.participants.length === 0);
 
 	function paidForParticipant(id: string): number {

@@ -28,7 +28,7 @@
 		class: className = ''
 	}: Props = $props();
 
-	const breakdown = $derived(calcActivity(activity, participants));
+	const breakdown = $derived(calcActivity(activity, { participants }));
 	const payerName = $derived(breakdown.payer?.name ?? activity.paidByName);
 	const collectTotal = $derived(breakdown.others.length * breakdown.share);
 	const dateLabel = $derived(
