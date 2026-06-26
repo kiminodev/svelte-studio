@@ -6,4 +6,6 @@ export * from './beezy/format';
 export * from './beezy/settlement';
 export * from './beezy/activitySummary';
 export * from './beezy/db';
+export * from './beezy/seed';
+export * from './beezy/store';
 export * from './beezy/utils';
