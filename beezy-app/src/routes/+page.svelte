@@ -86,6 +86,21 @@
 		saveView(snapshot);
 	});
 
+	/**
+	 * If detail (or other) sub points at a missing record, clear it so we return to tab home.
+	 * Mirrors mockup `viewEventDetail()` when `eventById` is null.
+	 */
+	$effect(() => {
+		if (loadStatus !== 'ready' || !viewHydrated) return;
+		const cleaned = sanitizeView(view, events, activities);
+		if (
+			cleaned.sub !== view.sub ||
+			cleaned.sheet !== view.sheet
+		) {
+			view = cleaned;
+		}
+	});
+
 	const detailEvent = $derived.by(() => {
 		if (view.sub?.type !== 'detail') return null;
 		const ev = eventById(view.sub.id);
@@ -225,13 +240,18 @@
 		patchView({ sub: { type: 'detail', id }, menu: false });
 	}
 
-	function openPayEvent(id: string) {
+	/** Open payment tab on a trip's expense picker (mockup `goPayEvent`). */
+	function goPayEvent(id: string) {
 		patchView({
 			tab: 'payment',
 			sub: { type: 'pay-event', id },
 			sheet: null,
 			menu: false
 		});
+	}
+
+	function openPayEvent(id: string) {
+		goPayEvent(id);
 	}
 
 	function openPayActivity(eventId: string, activityId: string) {
@@ -350,7 +370,7 @@
 				onfinishparticipants={() => showToast('Participants saved')}
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => showToast('Add expense — Phase 6')}
-				onsettleup={() => openPayEvent(detailEvent.id)}
+				onsettleup={() => goPayEvent(detailEvent.id)}
 				ondelete={() => handleDeleteEvent(detailEvent.id)}
 			/>
 		{:else if payActivity && payEvent && view.sub?.type === 'pay-activity'}
@@ -440,15 +460,6 @@
 				{/each}
 			{/if}
 		{:else}
-			<ScreenHead
-				title={tabLabels[view.tab]}
-				description={view.tab === 'payment'
-					? 'Pick a trip to generate a receipt everyone can screenshot and share.'
-					: view.tab === 'events'
-						? 'Pick an event to manage participants or settle up.'
-						: 'Every expense, who paid, and when.'}
-			/>
-
 			{#if view.tab === 'events'}
 				{#if events.length === 0}
 					<EmptyState
@@ -464,11 +475,19 @@
 						{/snippet}
 					</EmptyState>
 				{:else}
+					<ScreenHead
+						title="Your trips"
+						description="Pick an event to manage participants or settle up."
+					/>
 					{#each events as ev (ev.id)}
 						<EventCard {...eventCardProps(ev)} onclick={() => openEvent(ev.id)} />
 					{/each}
 				{/if}
 			{:else if view.tab === 'activities'}
+				<ScreenHead
+					title={tabLabels.activities}
+					description="Every expense, who paid, and when."
+				/>
 				{#if events.length === 0}
 					<EmptyState
 						emoji="📝"
@@ -504,20 +523,26 @@
 						/>
 					{/each}
 				{/if}
-			{:else if events.length === 0}
-				<EmptyState
-					emoji="🧾"
-					title="Nothing to settle yet"
-					description="Once a trip has expenses, generate a receipt everyone can screenshot."
-				>
-					{#snippet actions()}
-						<Button variant="yellow" onclick={() => setTab('events')}>Create an event</Button>
-					{/snippet}
-				</EmptyState>
 			{:else}
-				{#each events as ev (ev.id)}
-					<PayEventCard {...payCardProps(ev)} onclick={() => openPayEvent(ev.id)} />
-				{/each}
+				<ScreenHead
+					title={tabLabels.payment}
+					description="Pick a trip to generate a receipt everyone can screenshot and share."
+				/>
+				{#if events.length === 0}
+					<EmptyState
+						emoji="🧾"
+						title="Nothing to settle yet"
+						description="Once a trip has expenses, generate a receipt everyone can screenshot."
+					>
+						{#snippet actions()}
+							<Button variant="yellow" onclick={() => setTab('events')}>Create an event</Button>
+						{/snippet}
+					</EmptyState>
+				{:else}
+					{#each events as ev (ev.id)}
+						<PayEventCard {...payCardProps(ev)} onclick={() => openPayEvent(ev.id)} />
+					{/each}
+				{/if}
 			{/if}
 		{/if}
 	</Screen>

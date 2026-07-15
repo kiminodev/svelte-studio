@@ -264,7 +264,8 @@ From mockup ~lines 627–665:
 
 Compose Phases 2–4 into main content areas.
 
-> **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed. Remaining: polish empty states / AppBar parity tickets 5.2–5.6 as needed.
+> **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed.
+> **5.2 done:** Events home (`Your trips` + EventCards) and event detail (stats, participants, settle up → payment). Empty states 1 & 6. Remaining: 5.3–5.6.
 
 ### Route strategy
 
@@ -514,4 +515,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 5.1 — `+page` wired to IndexedDB store + ViewState (sessionStorage). Next: Phase 5.2–5.6 screen/nav polish as needed.*
+*Last updated: Phase 5.2 — Events home + detail (mockup parity). Next: 5.3 Activities tab polish / 5.4–5.6 as needed.*
