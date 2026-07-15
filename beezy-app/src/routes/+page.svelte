@@ -1,23 +1,31 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import {
 		calcActivity,
 		calcEvent,
 		isEventSettled,
-		payEventSummary,
-		type Participant
+		payEventSummary
 	} from '$lib/beezy/settlement';
 	import { fmtDate, peso } from '$lib/beezy/format';
+	import {
+		addParticipant,
+		deleteEvent,
+		loadStore,
+		removeParticipant,
+		resetDemo,
+		settleActivity,
+		unsettleActivity
+	} from '$lib/beezy/store';
+	import { defaultViewState, loadView, saveView } from '$lib/beezy/view';
+	import type { Activity, Event, TabId, ViewState } from '$lib/beezy/types';
 	import {
 		ActivityRow,
 		AppBar,
 		AppShell,
 		Button,
-		Card,
 		EmptyState,
 		EventCard,
 		EventDetail,
-		type EventDetailData,
-		Eyebrow,
 		Fab,
 		HintCard,
 		Icon,
@@ -29,178 +37,89 @@
 		Receipt,
 		Screen,
 		ScreenHead,
-		Sheet,
 		Tab,
 		TabBar,
 		Toast,
 		scheduleToastHide
 	} from '$lib';
 
-	type TabId = 'activities' | 'events' | 'payment';
+	type LoadStatus = 'loading' | 'ready' | 'error';
 
-	interface DemoActivity {
-		id: string;
-		name: string;
-		price: number;
-		paidById: string;
-		paidByName: string;
-		createdAt: string;
-		updatedAt?: string;
-		settled?: boolean;
-	}
-
-	type DemoEvent = Omit<EventDetailData, 'activities'> & {
-		createdAt: string;
-		activities: DemoActivity[];
-	};
-
-	function uid() {
-		return Math.random().toString(36).slice(2, 9);
-	}
-
-	let tab = $state<TabId>('events');
-	let showEmpty = $state(false);
-	let detailEventId = $state<string | null>(null);
-	let payEventId = $state<string | null>(null);
-	let payActivityId = $state<string | null>(null);
-	let sheetOpen = $state(false);
-	let menuOpen = $state(false);
+	let events = $state<Event[]>([]);
+	let activities = $state<Activity[]>([]);
+	let view = $state<ViewState>(defaultViewState());
+	let loadStatus = $state<LoadStatus>('loading');
+	let loadError = $state('');
 	let toastOpen = $state(false);
 	let toastMessage = $state('');
+	/** Avoid writing default view to sessionStorage before hydrate. */
+	let viewHydrated = $state(false);
 
-	let events = $state<DemoEvent[]>([
-		{
-			id: 'e1',
-			title: 'Boracay Getaway',
-			createdAt: '2026-06-05T20:00:00',
-			budget: 24000,
-			participants: [
-				{ id: 'p1', name: 'Mika' },
-				{ id: 'p2', name: 'Jomar' },
-				{ id: 'p3', name: 'Andrea' },
-				{ id: 'p4', name: 'Paolo' }
-			],
-			activities: [
-				{
-					id: 'a1',
-					name: 'Beachfront Resort (2 nights)',
-					price: 8000,
-					paidById: 'p1',
-					paidByName: 'Mika',
-					createdAt: '2026-06-06T14:00:00',
-					updatedAt: '2026-06-06T14:05:00',
-					settled: true
-				},
-				{
-					id: 'a2',
-					name: 'Island Hopping Tour',
-					price: 3600,
-					paidById: 'p2',
-					paidByName: 'Jomar',
-					createdAt: '2026-06-07T08:30:00'
-				},
-				{
-					id: 'a3',
-					name: 'Tricycles & Transpo',
-					price: 1200,
-					paidById: 'p4',
-					paidByName: 'Paolo',
-					createdAt: '2026-06-07T09:10:00'
-				},
-				{
-					id: 'a4',
-					name: 'Dinner — Real Coffee & Tea',
-					price: 2400,
-					paidById: 'p3',
-					paidByName: 'Andrea',
-					createdAt: '2026-06-07T20:10:00',
-					updatedAt: '2026-06-07T20:45:00'
-				},
-				{
-					id: 'a5',
-					name: 'Parasailing (2 pax)',
-					price: 5000,
-					paidById: 'p1',
-					paidByName: 'Mika',
-					createdAt: '2026-06-08T11:00:00'
-				},
-				{
-					id: 'a6',
-					name: 'Sunset Bar Tab',
-					price: 2800,
-					paidById: 'p2',
-					paidByName: 'Jomar',
-					createdAt: '2026-06-08T18:45:00',
-					updatedAt: '2026-06-08T19:02:00'
-				}
-			]
-		},
-		{
-			id: 'e2',
-			title: 'Tagaytay Roadtrip',
-			createdAt: '2026-05-29T19:00:00',
-			budget: 6000,
-			participants: [
-				{ id: 'p5', name: 'Mika' },
-				{ id: 'p6', name: 'Jomar' },
-				{ id: 'p7', name: 'Lia' }
-			],
-			activities: [
-				{
-					id: 'a7',
-					name: 'Gas & SLEX Toll',
-					price: 1500,
-					paidById: 'p6',
-					paidByName: 'Jomar',
-					createdAt: '2026-06-01T07:00:00'
-				},
-				{
-					id: 'a8',
-					name: 'Bulalohan Lunch',
-					price: 1800,
-					paidById: 'p5',
-					paidByName: 'Mika',
-					createdAt: '2026-06-01T13:00:00'
-				},
-				{
-					id: 'a9',
-					name: 'Coffee — Bag of Beans',
-					price: 900,
-					paidById: 'p7',
-					paidByName: 'Lia',
-					createdAt: '2026-06-01T16:00:00'
-				}
-			]
-		}
-	]);
+	onMount(() => {
+		const restored = { ...loadView(), sheet: null };
+		view = restored;
+		viewHydrated = true;
 
-	const detailEvent = $derived(events.find((e) => e.id === detailEventId) ?? null);
-
-	const payEvent = $derived.by(() => {
-		if (payEventId) return events.find((e) => e.id === payEventId) ?? null;
-		if (payActivityId) {
-			return events.find((e) => e.activities.some((a) => a.id === payActivityId)) ?? null;
-		}
-		return null;
+		loadStore()
+			.then((store) => {
+				events = store.events;
+				activities = store.activities;
+				view = sanitizeView(view, store.events, store.activities);
+				loadStatus = 'ready';
+			})
+			.catch((err: unknown) => {
+				loadStatus = 'error';
+				loadError =
+					err instanceof Error ? err.message : 'Could not open offline storage';
+			});
 	});
 
-	const payActivity = $derived(
-		payEvent && payActivityId
-			? (payEvent.activities.find((a) => a.id === payActivityId) ?? null)
-			: null
-	);
+	$effect(() => {
+		if (!viewHydrated) return;
+		// Track fields so effect re-runs on any view change.
+		const snapshot: ViewState = {
+			tab: view.tab,
+			sub: view.sub,
+			sheet: view.sheet,
+			menu: view.menu
+		};
+		saveView(snapshot);
+	});
 
-	const inSubScreen = $derived(!!detailEventId || !!payEventId || !!payActivityId);
+	const detailEvent = $derived.by(() => {
+		if (view.sub?.type !== 'detail') return null;
+		const ev = eventById(view.sub.id);
+		if (!ev) return null;
+		return { ...ev, activities: activitiesFor(ev.id) };
+	});
+
+	const payEvent = $derived.by(() => {
+		const sub = view.sub;
+		if (!sub) return null;
+		const id = sub.type === 'pay-event' ? sub.id : sub.type === 'pay-activity' ? sub.eventId : null;
+		if (!id) return null;
+		const ev = eventById(id);
+		if (!ev) return null;
+		return { ...ev, activities: activitiesFor(ev.id) };
+	});
+
+	const payActivity = $derived.by(() => {
+		const sub = view.sub;
+		if (sub?.type !== 'pay-activity' || !payEvent) return null;
+		return payEvent.activities.find((a) => a.id === sub.activityId) ?? null;
+	});
+
+	const inSubScreen = $derived(view.sub !== null);
 
 	const appBar = $derived.by(() => {
-		if (payActivity && payEvent) {
+		if (view.sub?.type === 'pay-activity' && payActivity && payEvent) {
 			return {
 				title: payEvent.title,
 				subtitle: 'Receipt to screenshot & share',
 				back: true
 			};
 		}
-		if (payEventId && payEvent) {
+		if (view.sub?.type === 'pay-event' && payEvent) {
 			return {
 				title: payEvent.title,
 				subtitle: 'Pick an expense to settle',
@@ -221,12 +140,6 @@
 		};
 	});
 
-	function showToast(message: string) {
-		toastMessage = message;
-		toastOpen = true;
-		scheduleToastHide((open) => (toastOpen = open));
-	}
-
 	const tabLabels: Record<TabId, string> = {
 		activities: 'Activities',
 		events: 'Events',
@@ -234,90 +147,168 @@
 	};
 
 	const fabVisible = $derived(
-		!sheetOpen && !inSubScreen && !showEmpty && (tab === 'events' || tab === 'activities')
+		!view.sub &&
+			!view.sheet &&
+			(view.tab === 'events' || (view.tab === 'activities' && events.length > 0))
 	);
 
-	function closeMenu() {
-		menuOpen = false;
+	function eventById(id: string): Event | null {
+		return events.find((e) => e.id === id) ?? null;
 	}
 
-	function clearSubScreens() {
-		detailEventId = null;
-		payEventId = null;
-		payActivityId = null;
+	function activitiesFor(eventId: string): Activity[] {
+		return activities.filter((a) => a.eventId === eventId);
+	}
+
+	/** Activities newest-first with event title (mirrors getAllActivities + join). */
+	function allActivitiesFlat() {
+		return activities
+			.slice()
+			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+			.map((a) => ({
+				...a,
+				eventTitle: eventById(a.eventId)?.title ?? ''
+			}));
+	}
+
+	/**
+	 * Drop sub-screens that point at deleted/missing records after store hydrate.
+	 */
+	function sanitizeView(v: ViewState, evs: Event[], acts: Activity[]): ViewState {
+		const next: ViewState = { ...v, sheet: null };
+		const sub = next.sub;
+		if (!sub) return next;
+
+		if (sub.type === 'detail') {
+			if (!evs.some((e) => e.id === sub.id)) next.sub = null;
+		} else if (sub.type === 'pay-event') {
+			if (!evs.some((e) => e.id === sub.id)) next.sub = null;
+		} else if (sub.type === 'pay-activity') {
+			const { eventId, activityId } = sub;
+			const hasEvent = evs.some((e) => e.id === eventId);
+			const hasAct = acts.some((a) => a.id === activityId && a.eventId === eventId);
+			if (!hasEvent || !hasAct) next.sub = null;
+		}
+
+		return next;
+	}
+
+	function patchView(patch: Partial<ViewState>) {
+		view = { ...view, ...patch };
+	}
+
+	function showToast(message: string) {
+		toastMessage = message;
+		toastOpen = true;
+		scheduleToastHide((open) => (toastOpen = open));
+	}
+
+	function closeMenu() {
+		patchView({ menu: false });
+	}
+
+	function setTab(tab: TabId) {
+		patchView({ tab, sub: null, sheet: null, menu: false });
 	}
 
 	function handleBack() {
-		if (payActivityId) {
-			payActivityId = null;
+		const sub = view.sub;
+		if (!sub) return;
+		if (sub.type === 'pay-activity') {
+			patchView({ sub: { type: 'pay-event', id: sub.eventId } });
 			return;
 		}
-		if (payEventId) {
-			payEventId = null;
-			return;
-		}
-		detailEventId = null;
+		patchView({ sub: null });
 	}
 
 	function openEvent(id: string) {
-		clearSubScreens();
-		detailEventId = id;
+		patchView({ sub: { type: 'detail', id }, menu: false });
 	}
 
 	function openPayEvent(id: string) {
-		clearSubScreens();
-		tab = 'payment';
-		payEventId = id;
-	}
-
-	function openPayActivity(activityId: string) {
-		payActivityId = activityId;
-	}
-
-	function updateEvent(id: string, patch: Partial<DemoEvent>) {
-		events = events.map((e) => (e.id === id ? { ...e, ...patch } : e));
-	}
-
-	function toggleActivitySettled(eventId: string, activityId: string, settled: boolean) {
-		updateEvent(eventId, {
-			activities: events
-				.find((e) => e.id === eventId)!
-				.activities.map((a) =>
-					a.id === activityId
-						? { ...a, settled, updatedAt: new Date().toISOString() }
-						: a
-				)
+		patchView({
+			tab: 'payment',
+			sub: { type: 'pay-event', id },
+			sheet: null,
+			menu: false
 		});
 	}
 
-	function eventCardProps(ev: DemoEvent) {
-		const totals = calcEvent(ev, ev.activities);
+	function openPayActivity(eventId: string, activityId: string) {
+		patchView({
+			sub: { type: 'pay-activity', eventId, activityId },
+			menu: false
+		});
+	}
+
+	function eventCardProps(ev: Event) {
+		const acts = activitiesFor(ev.id);
+		const totals = calcEvent(ev, acts);
 		return {
 			title: ev.title,
 			createdAt: ev.createdAt,
 			budget: ev.budget,
 			paxCount: ev.participants.length,
-			activityCount: ev.activities.length,
+			activityCount: acts.length,
 			spent: totals.total
 		};
 	}
 
-	function payCardProps(ev: DemoEvent) {
-		const totals = calcEvent(ev, ev.activities);
+	function payCardProps(ev: Event) {
+		const acts = activitiesFor(ev.id);
+		const totals = calcEvent(ev, acts);
 		return {
 			title: ev.title,
-			summary: payEventSummary(ev.activities, ev.participants.length, totals.total),
-			settled: isEventSettled(ev, ev.activities)
+			summary: payEventSummary(acts, ev.participants.length, totals.total),
+			settled: isEventSettled(ev, acts)
 		};
 	}
 
-	function allActivitiesFlat() {
-		return events.flatMap((ev) =>
-			ev.activities.map((a) => ({
-				...a,
-				eventTitle: ev.title
-			}))
-		);
+	async function refreshFromStore() {
+		const store = await loadStore();
+		events = store.events;
+		activities = store.activities;
+		view = sanitizeView(view, store.events, store.activities);
+	}
+
+	async function handleAddParticipant(eventId: string, name: string) {
+		const participant = await addParticipant(eventId, name);
+		if (!participant) return;
+		await refreshFromStore();
+		showToast(`Added ${name}`);
+	}
+
+	async function handleRemoveParticipant(eventId: string, participantId: string) {
+		const ok = await removeParticipant(eventId, participantId);
+		if (!ok) return;
+		await refreshFromStore();
+	}
+
+	async function handleDeleteEvent(eventId: string) {
+		if (!confirm('Delete this event and all its expenses?')) return;
+		const ok = await deleteEvent(eventId);
+		if (!ok) return;
+		patchView({ sub: null });
+		await refreshFromStore();
+		showToast('Event deleted');
+	}
+
+	async function handleToggleSettled(activityId: string, settled: boolean) {
+		const updated = settled
+			? await settleActivity(activityId)
+			: await unsettleActivity(activityId);
+		if (!updated) return;
+		await refreshFromStore();
+		showToast(settled ? 'Marked as settled' : 'Marked unpaid');
+	}
+
+	async function handleResetDemo() {
+		closeMenu();
+		const store = await resetDemo();
+		events = store.events;
+		activities = store.activities;
+		patchView({ sub: null, sheet: null, tab: 'events' });
+		showToast('Demo data restored');
 	}
 </script>
 
@@ -335,7 +326,7 @@
 			<IconButton
 				aria-label="More"
 				class="menu-trigger"
-				onclick={() => (menuOpen = !menuOpen)}
+				onclick={() => patchView({ menu: !view.menu })}
 			>
 				<Icon name="more" />
 			</IconButton>
@@ -343,44 +334,41 @@
 	</AppBar>
 
 	<Screen>
-		{#if detailEvent}
+		{#if loadStatus === 'loading'}
+			<p class="load-status">Loading trips…</p>
+		{:else if loadStatus === 'error'}
+			<EmptyState
+				emoji="⚠️"
+				title="Storage unavailable"
+				description={loadError ||
+					'Beezy needs IndexedDB to save trips offline. Try leaving private browsing or freeing disk space.'}
+			/>
+		{:else if detailEvent}
 			<EventDetail
 				event={detailEvent}
-				onaddparticipant={(name: string) => {
-					updateEvent(detailEvent.id, {
-						participants: [...detailEvent.participants, { id: uid(), name }]
-					});
-					showToast(`Added ${name}`);
-				}}
+				onaddparticipant={(name: string) => handleAddParticipant(detailEvent.id, name)}
 				onfinishparticipants={() => showToast('Participants saved')}
-				onremoveparticipant={(id: string) => {
-					updateEvent(detailEvent.id, {
-						participants: detailEvent.participants.filter((p: Participant) => p.id !== id)
-					});
-				}}
+				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => showToast('Add expense — Phase 6')}
 				onsettleup={() => openPayEvent(detailEvent.id)}
-				ondelete={() => {
-					events = events.filter((e) => e.id !== detailEvent.id);
-					clearSubScreens();
-					showToast('Event deleted');
-				}}
+				ondelete={() => handleDeleteEvent(detailEvent.id)}
 			/>
-		{:else if payActivity && payEvent}
-			<Receipt eventTitle={payEvent.title} activity={payActivity} participants={payEvent.participants} />
+		{:else if payActivity && payEvent && view.sub?.type === 'pay-activity'}
+			<Receipt
+				eventTitle={payEvent.title}
+				activity={payActivity}
+				participants={payEvent.participants}
+			/>
 			<div class="receipt-actions">
 				{#if payActivity.settled}
 					<Button
 						variant="secondary"
 						block
-						onclick={() => {
-							toggleActivitySettled(payEvent.id, payActivity.id, false);
-							showToast('Marked unpaid');
-						}}
+						onclick={() => handleToggleSettled(payActivity.id, false)}
 					>
 						Mark unpaid
 					</Button>
-					<Button variant="ghost" block onclick={() => showToast('Copied to clipboard')}>
+					<Button variant="ghost" block onclick={() => showToast('Copy receipt — Phase 7')}>
 						<Icon name="copy" />
 						Copy receipt text
 					</Button>
@@ -388,21 +376,18 @@
 					<Button
 						variant="yellow"
 						block
-						onclick={() => {
-							toggleActivitySettled(payEvent.id, payActivity.id, true);
-							showToast('Marked as settled');
-						}}
+						onclick={() => handleToggleSettled(payActivity.id, true)}
 					>
 						<Icon name="check" />
 						Settle this expense
 					</Button>
-					<Button variant="ghost" block onclick={() => showToast('Copied to clipboard')}>
+					<Button variant="ghost" block onclick={() => showToast('Copy receipt — Phase 7')}>
 						<Icon name="copy" />
 						Copy receipt text
 					</Button>
 				{/if}
 			</div>
-		{:else if payEvent}
+		{:else if payEvent && view.sub?.type === 'pay-event'}
 			{@const totals = calcEvent(payEvent, payEvent.activities)}
 			{@const settledCount = payEvent.activities.filter((a) => a.settled).length}
 			{@const allSettled = isEventSettled(payEvent, payEvent.activities)}
@@ -424,73 +409,101 @@
 				</HintCard>
 			{/if}
 
-			{#each payEvent.activities as activity (activity.id)}
-				{@const ac = calcActivity(activity, payEvent)}
-				{@const each = ac.n > 0 ? peso(ac.share) : '—'}
-				<ActivityRow
-					name={activity.name}
-					price={activity.price}
-					paidByName={activity.paidByName}
-					createdAt={activity.createdAt}
-					updatedAt={activity.updatedAt}
-					variant="payment"
-					settled={activity.settled}
-					oweLabel={ac.others.length ? `${ac.others.length} owe ${each} each` : 'solo expense'}
-					statusLabel={activity.settled
-						? `settled ${fmtDate(activity.updatedAt ?? activity.createdAt)}`
-						: 'tap to settle →'}
-					onclick={() => openPayActivity(activity.id)}
-				/>
-			{/each}
+			{#if payEvent.activities.length === 0}
+				<EmptyState
+					emoji="🧾"
+					title="No expenses yet"
+					description="Add expenses on the Activities tab, then come back to settle up."
+				>
+					{#snippet actions()}
+						<Button variant="yellow" onclick={() => setTab('activities')}>Go to Activities</Button>
+					{/snippet}
+				</EmptyState>
+			{:else}
+				{#each payEvent.activities as activity (activity.id)}
+					{@const ac = calcActivity(activity, payEvent)}
+					{@const each = ac.n > 0 ? peso(ac.share) : '—'}
+					<ActivityRow
+						name={activity.name}
+						price={activity.price}
+						paidByName={activity.paidByName}
+						createdAt={activity.createdAt}
+						updatedAt={activity.updatedAt}
+						variant="payment"
+						settled={activity.settled}
+						oweLabel={ac.others.length ? `${ac.others.length} owe ${each} each` : 'solo expense'}
+						statusLabel={activity.settled
+							? `settled ${fmtDate(activity.updatedAt ?? activity.createdAt)}`
+							: 'tap to settle →'}
+						onclick={() => openPayActivity(payEvent.id, activity.id)}
+					/>
+				{/each}
+			{/if}
 		{:else}
-			<Eyebrow accent>Phase 3 — Payment</Eyebrow>
 			<ScreenHead
-				title={tabLabels[tab]}
-				description={tab === 'payment'
+				title={tabLabels[view.tab]}
+				description={view.tab === 'payment'
 					? 'Pick a trip to generate a receipt everyone can screenshot and share.'
-					: tab === 'events'
-						? 'Tap an event card to open the detail screen.'
+					: view.tab === 'events'
+						? 'Pick an event to manage participants or settle up.'
 						: 'Every expense, who paid, and when.'}
 			/>
 
-			{#if tab === 'events'}
-				<label class="demo-toggle">
-					<input type="checkbox" bind:checked={showEmpty} />
-					Show empty state
-				</label>
-				{#if showEmpty}
+			{#if view.tab === 'events'}
+				{#if events.length === 0}
 					<EmptyState
 						emoji="🤗"
 						title="Welcome to Beezy"
 						description="Track shared expenses, split them fairly, and settle up in seconds — even with no signal."
 					>
 						{#snippet actions()}
-							<Button variant="yellow" onclick={() => (sheetOpen = true)}>
+							<Button variant="yellow" onclick={() => showToast('New event — Phase 6')}>
 								<Icon name="plus" />
 								Create your first event
 							</Button>
 						{/snippet}
 					</EmptyState>
 				{:else}
-					<Card class="card-demo">
-						<p class="card-demo-text">Base <code>.card</code> surface — padding via class.</p>
-					</Card>
 					{#each events as ev (ev.id)}
 						<EventCard {...eventCardProps(ev)} onclick={() => openEvent(ev.id)} />
 					{/each}
 				{/if}
-			{:else if tab === 'activities'}
-				{#each allActivitiesFlat() as act (act.id)}
-					<ActivityRow
-						name={act.name}
-						price={act.price}
-						paidByName={act.paidByName}
-						createdAt={act.createdAt}
-						updatedAt={act.updatedAt}
-						eventTitle={act.eventTitle}
-						onclick={() => showToast(`Edit ${act.name}`)}
-					/>
-				{/each}
+			{:else if view.tab === 'activities'}
+				{#if events.length === 0}
+					<EmptyState
+						emoji="📝"
+						title="No trips yet"
+						description="Create an event first, then log shared expenses here."
+					>
+						{#snippet actions()}
+							<Button variant="yellow" onclick={() => setTab('events')}>Go to Events</Button>
+						{/snippet}
+					</EmptyState>
+				{:else if activities.length === 0}
+					<EmptyState
+						emoji="🧾"
+						title="No expenses yet"
+						description="Add your first shared expense for a trip."
+					>
+						{#snippet actions()}
+							<Button variant="yellow" onclick={() => showToast('New activity — Phase 6')}>
+								Add first expense
+							</Button>
+						{/snippet}
+					</EmptyState>
+				{:else}
+					{#each allActivitiesFlat() as act (act.id)}
+						<ActivityRow
+							name={act.name}
+							price={act.price}
+							paidByName={act.paidByName}
+							createdAt={act.createdAt}
+							updatedAt={act.updatedAt}
+							eventTitle={act.eventTitle}
+							onclick={() => showToast(`Edit ${act.name} — Phase 6`)}
+						/>
+					{/each}
+				{/if}
 			{:else if events.length === 0}
 				<EmptyState
 					emoji="🧾"
@@ -498,7 +511,7 @@
 					description="Once a trip has expenses, generate a receipt everyone can screenshot."
 				>
 					{#snippet actions()}
-						<Button variant="yellow" onclick={() => (tab = 'events')}>Create an event</Button>
+						<Button variant="yellow" onclick={() => setTab('events')}>Create an event</Button>
 					{/snippet}
 				</EmptyState>
 			{:else}
@@ -509,44 +522,39 @@
 		{/if}
 	</Screen>
 
-	<Fab aria-label="Add" hidden={!fabVisible} onclick={() => (sheetOpen = true)}>
+	<Fab
+		aria-label="Add"
+		hidden={!fabVisible || loadStatus !== 'ready'}
+		onclick={() => showToast(view.tab === 'events' ? 'New event — Phase 6' : 'New activity — Phase 6')}
+	>
 		<Icon name="plus" />
 	</Fab>
 
 	<TabBar>
 		<Tab
 			label="Activities"
-			active={tab === 'activities' && !inSubScreen}
-			onclick={() => {
-				clearSubScreens();
-				tab = 'activities';
-			}}
+			active={view.tab === 'activities' && !inSubScreen}
+			onclick={() => setTab('activities')}
 		>
 			{#snippet icon()}<Icon name="activities" />{/snippet}
 		</Tab>
 		<Tab
 			label="Events"
-			active={tab === 'events' && !inSubScreen}
-			onclick={() => {
-				clearSubScreens();
-				tab = 'events';
-			}}
+			active={view.tab === 'events' && !inSubScreen}
+			onclick={() => setTab('events')}
 		>
 			{#snippet icon()}<Icon name="events" />{/snippet}
 		</Tab>
 		<Tab
 			label="Payment"
-			active={tab === 'payment' && !inSubScreen}
-			onclick={() => {
-				clearSubScreens();
-				tab = 'payment';
-			}}
+			active={view.tab === 'payment' && !inSubScreen}
+			onclick={() => setTab('payment')}
 		>
 			{#snippet icon()}<Icon name="payment" />{/snippet}
 		</Tab>
 	</TabBar>
 
-	<MenuPopover open={menuOpen} onclose={closeMenu}>
+	<MenuPopover open={view.menu} onclose={closeMenu}>
 		<MenuItem
 			label="About Beezy"
 			onclick={() => {
@@ -556,71 +564,19 @@
 		>
 			{#snippet icon()}<Icon name="info" />{/snippet}
 		</MenuItem>
-		<MenuItem
-			label="Reset demo data"
-			onclick={() => {
-				closeMenu();
-				showToast('Demo data restored');
-			}}
-		>
+		<MenuItem label="Reset demo data" onclick={handleResetDemo}>
 			{#snippet icon()}<Icon name="refresh" />{/snippet}
 		</MenuItem>
 	</MenuPopover>
-
-	<Sheet open={sheetOpen}>
-		{#snippet head()}
-			<div class="sheet-head">
-				<IconButton aria-label="Close" onclick={() => (sheetOpen = false)}>
-					<Icon name="close" />
-				</IconButton>
-				<h3>New event</h3>
-			</div>
-		{/snippet}
-		{#snippet body()}
-			<p style="color: var(--muted); font-size: 13px">
-				Sheet body slot — forms and detail content go here.
-			</p>
-		{/snippet}
-		{#snippet foot()}
-			<Button variant="secondary" block onclick={() => (sheetOpen = false)}>Cancel</Button>
-			<Button
-				variant="yellow"
-				block
-				onclick={() => {
-					sheetOpen = false;
-					showToast('Event created');
-				}}
-			>
-				Add event
-			</Button>
-		{/snippet}
-	</Sheet>
 
 	<Toast message={toastMessage} open={toastOpen} />
 </AppShell>
 
 <style>
-	.demo-toggle {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 16px;
-		font-size: var(--text-sm);
-	}
-
-	:global(.card-demo) {
-		padding: 14px 15px;
-		margin-bottom: 10px;
-	}
-
-	.card-demo-text {
-		margin: 0;
-		font-size: var(--text-sm);
+	.load-status {
+		margin: 24px 0;
 		color: var(--muted);
-	}
-
-	.card-demo-text :global(code) {
-		font-family: var(--font-mono);
-		font-size: 0.95em;
+		font-size: var(--text-sm);
+		text-align: center;
 	}
 </style>

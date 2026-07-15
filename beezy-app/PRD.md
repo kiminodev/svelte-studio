@@ -46,7 +46,7 @@ Phase 1  Atoms & tokens          ✅ Done
 Phase 2  App shell               ✅ Done
 Phase 3  Cards & list molecules ✅ Done
 Phase 4  Domain layer            ✅ Done
-Phase 5  Tab screens             ⬜ Not started
+Phase 5  Tab screens             🔄 In progress
 Phase 6  Sheets, forms & menu    ⬜ Not started
 Phase 7  Payment & settlement    ⬜ Not started
 Phase 8  Polish & ship           ⬜ Not started
@@ -260,9 +260,11 @@ From mockup ~lines 627–665:
 
 ---
 
-## Phase 5 — Tab screens ⬜
+## Phase 5 — Tab screens 🔄
 
 Compose Phases 2–4 into main content areas.
+
+> **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed. Remaining: polish empty states / AppBar parity tickets 5.2–5.6 as needed.
 
 ### Route strategy
 
@@ -512,4 +514,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 3 complete (`Card` base surface). Next: Phase 5 tab screens (wire store + ViewState into main UI).*
+*Last updated: Phase 5.1 — `+page` wired to IndexedDB store + ViewState (sessionStorage). Next: Phase 5.2–5.6 screen/nav polish as needed.*
