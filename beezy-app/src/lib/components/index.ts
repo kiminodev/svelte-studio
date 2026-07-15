@@ -15,6 +15,7 @@ export { default as Tab } from './shell/Tab.svelte';
 export { default as TabBar } from './shell/TabBar.svelte';
 export { default as Toast } from './shell/Toast.svelte';
 export { default as Avatar } from './Avatar.svelte';
+export { default as Card } from './Card.svelte';
 export { default as Chip } from './Chip.svelte';
 export { default as Divider } from './Divider.svelte';
 export { default as EmptyState } from './EmptyState.svelte';
