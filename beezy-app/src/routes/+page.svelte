@@ -12,6 +12,7 @@
 		AppBar,
 		AppShell,
 		Button,
+		Card,
 		EmptyState,
 		EventCard,
 		EventDetail,
@@ -471,6 +472,9 @@
 						{/snippet}
 					</EmptyState>
 				{:else}
+					<Card class="card-demo">
+						<p class="card-demo-text">Base <code>.card</code> surface — padding via class.</p>
+					</Card>
 					{#each events as ev (ev.id)}
 						<EventCard {...eventCardProps(ev)} onclick={() => openEvent(ev.id)} />
 					{/each}
@@ -602,5 +606,21 @@
 		gap: 8px;
 		margin-bottom: 16px;
 		font-size: var(--text-sm);
+	}
+
+	:global(.card-demo) {
+		padding: 14px 15px;
+		margin-bottom: 10px;
+	}
+
+	.card-demo-text {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--muted);
+	}
+
+	.card-demo-text :global(code) {
+		font-family: var(--font-mono);
+		font-size: 0.95em;
 	}
 </style>

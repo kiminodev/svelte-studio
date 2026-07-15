@@ -44,8 +44,8 @@ Hugging Face direction: sunshine yellow (`#ffd21e`) + IBM Plex Mono identity + S
 ```
 Phase 1  Atoms & tokens          ✅ Done
 Phase 2  App shell               ✅ Done
-Phase 3  Cards & list molecules 🔄 In progress
-Phase 4  Domain layer            ⬜ Not started
+Phase 3  Cards & list molecules ✅ Done
+Phase 4  Domain layer            ✅ Done
 Phase 5  Tab screens             ⬜ Not started
 Phase 6  Sheets, forms & menu    ⬜ Not started
 Phase 7  Payment & settlement    ⬜ Not started
@@ -146,7 +146,7 @@ Hide FAB on `payment` tab and all sub-screens.
 
 ---
 
-## Phase 3 — List & card molecules 🔄
+## Phase 3 — List & card molecules ✅
 
 Reusable building blocks for all three main tabs.
 
@@ -155,7 +155,7 @@ Reusable building blocks for all three main tabs.
 | Component | Mockup class | Status |
 |-----------|--------------|--------|
 | `EmptyState` | `.empty` | [x] |
-| `Card` | `.card` | [ ] |
+| `Card` | `.card` | [x] |
 | `EventCard` | `.event-card` | [x] |
 | `ProgressBar` | `.progress` | [x] |
 | `ActivityRow` | `.act-row` | [x] |
@@ -190,7 +190,7 @@ Consider `components.css` if `primitives.css` + `shell.css` grow too large.
 
 ---
 
-## Phase 4 — Domain layer ⬜
+## Phase 4 — Domain layer ✅
 
 Port mockup data model and business logic into typed TypeScript — no UI.
 
@@ -212,18 +212,20 @@ Port mockup data model and business logic into typed TypeScript — no UI.
 }
 ```
 
-### Files to create
+### Files
 
 ```
 src/lib/beezy/
-  types.ts          — Event, Activity, Participant, ViewState, SheetState
-  format.ts         — peso(), pesoSigned(), fmtDate(), fmtDateTime()
-  settlement.ts     — tally(), calcEvent(), calcOutstanding(), calcActivity(), isEventSettled()
-  db.ts             — IndexedDB open, schema, migrations
-  store.ts          — CRUD for events & activities via IndexedDB
-  seed.ts           — seedData() (Boracay + Tagaytay demo)
-  id.ts             — uid()
-  utils.ts          — exists (initials, avatarIndex)
+  types.ts            — Event, Activity, Participant, ViewState, SheetState [x]
+  format.ts           — peso(), pesoSigned(), fmtDate(), fmtDateTime() [x]
+  settlement.ts       — tally(), calcEvent(), calcOutstanding(), calcActivity(), isEventSettled() [x]
+  db.ts               — IndexedDB open, schema, migrations [x]
+  store.ts            — CRUD for events & activities via IndexedDB [x]
+  seed.ts             — seedData() (Boracay + Tagaytay demo) [x]
+  id.ts               — uid() [x]
+  utils.ts            — initials(), avatarIndex() (Phase 1) [x]
+  activitySummary.ts  — formatActivitySummary() (copy-to-clipboard text) [x]
+  view.ts             — loadView() / saveView() via sessionStorage [x]
 ```
 
 ### Storage
@@ -250,9 +252,11 @@ From mockup ~lines 627–665:
 
 ### Exit criteria
 
-- Pure settlement functions are unit-testable
-- Store reads/writes IndexedDB with `settled` migration
-- Copy text format matches mockup output
+- [x] Pure settlement functions are unit-testable (tests deferred to Phase 8)
+- [x] Store reads/writes IndexedDB with `settled` migration
+- [x] Copy text format matches mockup output (Beezy branding instead of legacy KKB label)
+
+> **Not in Phase 4 scope:** wiring `loadStore()` / `loadView()` into tab screens — that is Phase 5.
 
 ---
 
@@ -508,4 +512,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 2 complete (shell, toast, menu, icons). FAB visibility wired to real view state deferred to Phase 5. Next: Phase 3 list & card molecules.*
+*Last updated: Phase 3 complete (`Card` base surface). Next: Phase 5 tab screens (wire store + ViewState into main UI).*
