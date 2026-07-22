@@ -265,7 +265,8 @@ From mockup ~lines 627–665:
 Compose Phases 2–4 into main content areas.
 
 > **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed.
-> **5.2 done:** Events home (`Your trips` + EventCards) and event detail (stats, participants, settle up → payment). Empty states 1 & 6. Remaining: 5.3–5.6.
+> **5.2 done:** Events home (`Your trips` + EventCards) and event detail (stats, participants, settle up → payment). Empty states 1 & 6.
+> **5.3 done:** Activities tab — flat list, mockup empty states 2 & 3, ScreenHead + Phase 6 edit stub. Remaining: 5.4–5.6.
 
 ### Route strategy
 
@@ -515,4 +516,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 5.2 — Events home + detail (mockup parity). Next: 5.3 Activities tab polish / 5.4–5.6 as needed.*
+*Last updated: Phase 5.3 — Activities tab mockup parity (empty states 2 & 3, ScreenHead). Next: 5.4 Payment picker / 5.5–5.6.*

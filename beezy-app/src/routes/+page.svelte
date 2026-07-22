@@ -484,15 +484,11 @@
 					{/each}
 				{/if}
 			{:else if view.tab === 'activities'}
-				<ScreenHead
-					title={tabLabels.activities}
-					description="Every expense, who paid, and when."
-				/>
 				{#if events.length === 0}
 					<EmptyState
-						emoji="📝"
-						title="No trips yet"
-						description="Create an event first, then log shared expenses here."
+						emoji="📋"
+						title="No activities yet"
+						description="Create an event first — activities belong to a trip."
 					>
 						{#snippet actions()}
 							<Button variant="yellow" onclick={() => setTab('events')}>Go to Events</Button>
@@ -500,17 +496,22 @@
 					</EmptyState>
 				{:else if activities.length === 0}
 					<EmptyState
-						emoji="🧾"
-						title="No expenses yet"
-						description="Add your first shared expense for a trip."
+						emoji="📋"
+						title="Log your first expense"
+						description="Who paid, for what, and how much. Beezy tracks the rest."
 					>
 						{#snippet actions()}
 							<Button variant="yellow" onclick={() => showToast('New activity — Phase 6')}>
-								Add first expense
+								<Icon name="plus" />
+								Add activity
 							</Button>
 						{/snippet}
 					</EmptyState>
 				{:else}
+					<ScreenHead
+						title="Activities"
+						description="Every expense, who paid, and when. Tap to edit."
+					/>
 					{#each allActivitiesFlat() as act (act.id)}
 						<ActivityRow
 							name={act.name}
