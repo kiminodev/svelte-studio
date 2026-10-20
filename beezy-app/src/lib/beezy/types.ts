@@ -75,6 +75,8 @@ export interface ViewState {
 	sub: SubState | null;
 	sheet: SheetState | null;
 	menu: boolean;
+	/** When true, fully settled trips are hidden on the Events list. */
+	hideDone: boolean;
 }
 
 /** Minimal activity fields needed for settlement math. */

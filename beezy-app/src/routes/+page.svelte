@@ -22,6 +22,7 @@
 		type CreateActivityInput,
 		type CreateEventInput
 	} from '$lib/beezy/store';
+	import { copyActivitySummary } from '$lib/beezy/activitySummary';
 	import { defaultViewState, loadView, saveView } from '$lib/beezy/view';
 	import type { Activity, Event, TabId, ViewState } from '$lib/beezy/types';
 	import {
@@ -90,7 +91,8 @@
 			tab: view.tab,
 			sub: view.sub,
 			sheet: view.sheet,
-			menu: view.menu
+			menu: view.menu,
+			hideDone: view.hideDone
 		};
 		saveView(snapshot);
 	});
@@ -175,6 +177,32 @@
 			!view.sheet &&
 			(view.tab === 'events' || (view.tab === 'activities' && events.length > 0))
 	);
+
+	const settledEventIds = $derived.by(() => {
+		const ids = new Set<string>();
+		for (const ev of events) {
+			if (isEventSettled(ev, activitiesFor(ev.id))) ids.add(ev.id);
+		}
+		return ids;
+	});
+
+	const visibleEvents = $derived(
+		view.hideDone ? events.filter((ev) => !settledEventIds.has(ev.id)) : events
+	);
+
+	const visibleActivitiesFlat = $derived.by(() => {
+		const list = allActivitiesFlat();
+		if (!view.hideDone) return list;
+		return list.filter((a) => !settledEventIds.has(a.eventId));
+	});
+
+	function hiddenListHint(fallback: string): string {
+		if (view.hideDone && settledEventIds.size > 0) {
+			const n = settledEventIds.size;
+			return `${n} settled trip${n === 1 ? '' : 's'} hidden.`;
+		}
+		return fallback;
+	}
 
 	function eventById(id: string): Event | null {
 		return events.find((e) => e.id === id) ?? null;
@@ -311,8 +339,13 @@
 			budget: ev.budget,
 			paxCount: ev.participants.length,
 			activityCount: acts.length,
-			spent: totals.total
+			spent: totals.total,
+			settled: isEventSettled(ev, acts)
 		};
+	}
+
+	function toggleHideDone() {
+		patchView({ hideDone: !view.hideDone });
 	}
 
 	function payCardProps(ev: Event) {
@@ -360,7 +393,23 @@
 			: await unsettleActivity(activityId);
 		if (!updated) return;
 		await refreshFromStore();
-		showToast(settled ? 'Marked as settled' : 'Marked unpaid');
+		if (!settled) {
+			showToast('Marked unpaid');
+			return;
+		}
+		const ev = eventById(updated.eventId);
+		const acts = activitiesFor(updated.eventId);
+		if (ev && isEventSettled(ev, acts)) {
+			showToast(`All settled — ${ev.title} is square 🤗`);
+		} else {
+			showToast('Marked as settled');
+		}
+	}
+
+	async function handleCopyReceipt() {
+		if (!payActivity || !payEvent) return;
+		const ok = await copyActivitySummary(payActivity, payEvent);
+		showToast(ok ? 'Copied to clipboard' : 'Copy failed — screenshot the receipt');
 	}
 
 	async function handleSaveEvent(input: CreateEventInput) {
@@ -472,10 +521,6 @@
 					>
 						Mark unpaid
 					</Button>
-					<Button variant="ghost" block onclick={() => showToast('Copy receipt — Phase 7')}>
-						<Icon name="copy" />
-						Copy receipt text
-					</Button>
 				{:else}
 					<Button
 						variant="yellow"
@@ -485,11 +530,11 @@
 						<Icon name="check" />
 						Settle this expense
 					</Button>
-					<Button variant="ghost" block onclick={() => showToast('Copy receipt — Phase 7')}>
-						<Icon name="copy" />
-						Copy receipt text
-					</Button>
 				{/if}
+				<Button variant="ghost" block onclick={handleCopyReceipt}>
+					<Icon name="copy" />
+					Copy receipt text
+				</Button>
 			</div>
 		{:else if payEvent && view.sub?.type === 'pay-event'}
 			{@const totals = calcEvent(payEvent, payEvent.activities)}
@@ -561,11 +606,27 @@
 				{:else}
 					<ScreenHead
 						title="Your trips"
-						description="Pick an event to manage participants or settle up."
-					/>
-					{#each events as ev (ev.id)}
-						<EventCard {...eventCardProps(ev)} onclick={() => openEvent(ev.id)} />
-					{/each}
+						description={hiddenListHint('Pick an event to manage participants or settle up.')}
+					>
+						{#snippet actions()}
+							{@render hideDoneToggle()}
+						{/snippet}
+					</ScreenHead>
+					{#if visibleEvents.length === 0}
+						<EmptyState
+							emoji="✅"
+							title="Settled trips are hidden"
+							description="Turn Show done back on to see trips that are already square."
+						>
+							{#snippet actions()}
+								<Button variant="yellow" onclick={toggleHideDone}>Show done</Button>
+							{/snippet}
+						</EmptyState>
+					{:else}
+						{#each visibleEvents as ev (ev.id)}
+							<EventCard {...eventCardProps(ev)} onclick={() => openEvent(ev.id)} />
+						{/each}
+					{/if}
 				{/if}
 			{:else if view.tab === 'activities'}
 				{#if events.length === 0}
@@ -594,25 +655,48 @@
 				{:else}
 					<ScreenHead
 						title="Activities"
-						description="Every expense, who paid, and when. Tap to edit."
-					/>
-					{#each allActivitiesFlat() as act (act.id)}
-						<ActivityRow
-							name={act.name}
-							price={act.price}
-							paidByName={act.paidByName}
-							createdAt={act.createdAt}
-							updatedAt={act.updatedAt}
-							eventTitle={act.eventTitle}
-							onclick={() => openActivitySheet(act.id, act.eventId)}
-						/>
-					{/each}
+						description={hiddenListHint('Every expense, who paid, and when. Tap to edit.')}
+					>
+						{#snippet actions()}
+							{@render hideDoneToggle()}
+						{/snippet}
+					</ScreenHead>
+					{#if visibleActivitiesFlat.length === 0}
+						<EmptyState
+							emoji="✅"
+							title="Settled trips are hidden"
+							description="Turn Show done back on to see expenses from trips that are already square."
+						>
+							{#snippet actions()}
+								<Button variant="yellow" onclick={toggleHideDone}>Show done</Button>
+							{/snippet}
+						</EmptyState>
+					{:else}
+						{#each visibleActivitiesFlat as act (act.id)}
+							<ActivityRow
+								name={act.name}
+								price={act.price}
+								paidByName={act.paidByName}
+								createdAt={act.createdAt}
+								updatedAt={act.updatedAt}
+								eventTitle={act.eventTitle}
+								settled={act.settled}
+								onclick={() => openActivitySheet(act.id, act.eventId)}
+							/>
+						{/each}
+					{/if}
 				{/if}
 			{:else}
 				<ScreenHead
 					title={tabLabels.payment}
-					description="Pick a trip to generate a receipt everyone can screenshot and share."
-				/>
+					description={hiddenListHint(
+						'Pick a trip to generate a receipt everyone can screenshot and share.'
+					)}
+				>
+					{#snippet actions()}
+						{@render hideDoneToggle()}
+					{/snippet}
+				</ScreenHead>
 				{#if events.length === 0}
 					<EmptyState
 						emoji="🧾"
@@ -623,8 +707,18 @@
 							<Button variant="yellow" onclick={() => setTab('events')}>Create an event</Button>
 						{/snippet}
 					</EmptyState>
+				{:else if visibleEvents.length === 0}
+					<EmptyState
+						emoji="✅"
+						title="Settled trips are hidden"
+						description="Turn Show done back on to settle or reopen receipts for square trips."
+					>
+						{#snippet actions()}
+							<Button variant="yellow" onclick={toggleHideDone}>Show done</Button>
+						{/snippet}
+					</EmptyState>
 				{:else}
-					{#each events as ev (ev.id)}
+					{#each visibleEvents as ev (ev.id)}
 						<PayEventCard {...payCardProps(ev)} onclick={() => openPayEvent(ev.id)} />
 					{/each}
 				{/if}
@@ -691,6 +785,14 @@
 
 	<Toast message={toastMessage} open={toastOpen} />
 </AppShell>
+
+{#snippet hideDoneToggle()}
+	{#if settledEventIds.size > 0}
+		<Button variant="ghost" size="sm" onclick={toggleHideDone} aria-pressed={view.hideDone}>
+			{view.hideDone ? 'Show done' : 'Hide done'}
+		</Button>
+	{/if}
+{/snippet}
 
 <style>
 	.load-status {

@@ -49,3 +49,67 @@ export function formatActivitySummary(
 
 	return lines.join('\n');
 }
+
+/**
+ * Copy plain text to the clipboard.
+ *
+ * Tries `document.execCommand('copy')` first so it runs in the same turn as a
+ * user gesture (older browsers). If that fails, uses `navigator.clipboard.writeText`.
+ *
+ * @returns whether the write succeeded
+ */
+export async function copyText(text: string): Promise<boolean> {
+	if (fallbackCopy(text)) return true;
+
+	if (typeof window !== 'undefined') {
+		window.focus();
+	}
+
+	if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+	return false;
+}
+
+/**
+ * Format an activity receipt and copy it (mockup `copyActivitySummary()`).
+ *
+ * @returns whether the clipboard write succeeded
+ */
+export async function copyActivitySummary(
+	activity: ActivitySummaryInput,
+	event: ActivitySummaryEvent
+): Promise<boolean> {
+	return copyText(formatActivitySummary(activity, event));
+}
+
+function fallbackCopy(text: string): boolean {
+	if (typeof document === 'undefined') return false;
+
+	const ta = document.createElement('textarea');
+	ta.value = text;
+	ta.setAttribute('readonly', '');
+	ta.style.position = 'fixed';
+	ta.style.top = '0';
+	ta.style.left = '0';
+	ta.style.width = '1px';
+	ta.style.height = '1px';
+	ta.style.opacity = '0';
+	document.body.appendChild(ta);
+	ta.focus();
+	ta.select();
+	ta.setSelectionRange(0, text.length);
+
+	try {
+		return document.execCommand('copy');
+	} catch {
+		return false;
+	} finally {
+		document.body.removeChild(ta);
+	}
+}

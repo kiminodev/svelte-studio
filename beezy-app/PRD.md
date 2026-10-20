@@ -48,7 +48,7 @@ Phase 3  Cards & list molecules ✅ Done
 Phase 4  Domain layer            ✅ Done
 Phase 5  Tab screens             ✅ Done
 Phase 6  Sheets, forms & menu    ✅ Done
-Phase 7  Payment & settlement    🔄 Partial — receipts + settle/unsettle; copy receipt is a toast
+Phase 7  Payment & settlement    ✅ Done
 Phase 8  Polish & ship           ⬜ Not started
 ```
 
@@ -348,9 +348,9 @@ Reuse Phase 1: `Field`, `Input`, `AmountInput`, `Select`, `Button`, `HintCard`, 
 
 ---
 
-## Phase 7 — Payment & settlement 🔄
+## Phase 7 — Payment & settlement ✅
 
-> **Partial:** Payment tab → event picker → receipt → settle/unsettle is wired and persists to IndexedDB. Copy receipt text is a Phase 7 toast (`formatActivitySummary()` exists but is unused). Fully-settled toast copy is not the mockup string yet.
+> **Done:** Payment tab → event picker → receipt → settle/unsettle persists to IndexedDB. Copy uses `formatActivitySummary()` + clipboard with `execCommand` fallback. Fully-settled toast matches mockup copy.
 
 ### User flow
 
@@ -374,12 +374,14 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 - All settled event — green `PayEventCard` + hint card
 - Participant with paid activities — cannot remove
 - Event fully settled toast — "All settled — {title} is square 🤗"
+- Activities list marks settled expenses (chip + strikethrough); they stay editable
+- **Hide done** / **Show done** hides fully settled trips on Events, Activities, and Payment (`hideDone` in view state)
 
 ### Exit criteria
 
 - [x] Settle / unsettle updates store and progress UI
 - [x] Receipt layout matches mockup (tear edge, collect breakdown)
-- [ ] Clipboard copy with fallback for older browsers
+- [x] Clipboard copy with fallback for older browsers
 
 ---
 
@@ -432,7 +434,7 @@ Use when Phase 8 is near complete.
 - [x] Per-expense picker with progress header
 - [x] Receipt with tear edge, collect breakdown
 - [x] Settle / unsettle
-- [ ] Copy receipt text
+- [x] Copy receipt text
 
 ### Global
 
@@ -448,9 +450,7 @@ Use when Phase 8 is near complete.
 
 Remaining work:
 
-1. **Finish Phase 6** — New event sheet, new/edit activity sheet, About sheet, confirm on reset demo
-2. **Finish Phase 7** — Copy receipt text (`formatActivitySummary`), fully-settled toast copy
-3. **Phase 8** — favicon, optional `/kit`, tests, a11y, PWA
+1. **Phase 8** — favicon, optional `/kit`, tests, a11y, PWA
 
 ---
 
@@ -522,4 +522,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 6 complete. Next: Phase 7 copy receipt text and fully-settled toast copy.*
+*Last updated: Phase 7 complete. Next: Phase 8 polish & ship.*
