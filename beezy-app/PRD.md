@@ -7,10 +7,10 @@ This document is the single source of truth for building the SvelteKit app from 
 | | |
 |---|---|
 | **Mockup spec** | [`static/beezy-mockup.html`](static/beezy-mockup.html) |
-| **UI components** | [`src/lib/components/ui/`](src/lib/components/ui/) |
+| **UI components** | [`src/lib/components/`](src/lib/components/) |
 | **Design tokens** | [`src/lib/styles/`](src/lib/styles/) |
 | **Domain helpers** | [`src/lib/beezy/`](src/lib/beezy/) |
-| **Component showcase** | [`src/routes/+page.svelte`](src/routes/+page.svelte) (move to `/kit` in Phase 8) |
+| **App** | [`src/routes/+page.svelte`](src/routes/+page.svelte) (single-page controller) |
 
 ---
 
@@ -46,9 +46,9 @@ Phase 1  Atoms & tokens          ✅ Done
 Phase 2  App shell               ✅ Done
 Phase 3  Cards & list molecules ✅ Done
 Phase 4  Domain layer            ✅ Done
-Phase 5  Tab screens             🔄 In progress
-Phase 6  Sheets, forms & menu    ⬜ Not started
-Phase 7  Payment & settlement    ⬜ Not started
+Phase 5  Tab screens             ✅ Done
+Phase 6  Sheets, forms & menu    🔄 Partial — reset demo only; create/edit/About are toasts
+Phase 7  Payment & settlement    🔄 Partial — receipts + settle/unsettle; copy receipt is a toast
 Phase 8  Polish & ship           ⬜ Not started
 ```
 
@@ -80,7 +80,7 @@ Thin Svelte wrappers over global CSS classes in `primitives.css` — not Tailwin
 | `base.css` | Reset, body, `.mono` |
 | `primitives.css` | Buttons, avatars, chips, fields, screen-head, eyebrow |
 
-### Components (`src/lib/components/ui/`)
+### Components (`src/lib/components/`)
 
 - [x] `Button` — variants: primary, yellow, secondary, ghost, danger; sizes default/sm; block
 - [x] `IconButton`
@@ -98,7 +98,7 @@ Thin Svelte wrappers over global CSS classes in `primitives.css` — not Tailwin
 
 - [x] `src/lib/beezy/utils.ts` — `initials()`, `avatarIndex()`
 
-**Exit criteria:** All atoms render on the showcase page and match the mockup visually.
+**Exit criteria:** All atoms render in the app and match the mockup visually.
 
 ---
 
@@ -123,7 +123,7 @@ Reproduce the mockup phone-frame shell (440px column, safe areas, internal scrol
 | `Sheet` | `.overlay` + `.sheet-*` | [x] |
 | `Toast` | `.toast` | [x] |
 | `MenuPopover` | `.menu-pop`, `.menu-item` | [x] |
-| Icons module | mockup `ICON` object | [x] `src/lib/ui/icons/` |
+| Icons module | mockup `ICON` object | [x] `src/lib/components/icons/` |
 
 `AppBar` uses slots for brand (🤗 badge) and leading/trailing actions instead of a separate `BrandBadge` component.
 
@@ -138,11 +138,11 @@ Hide FAB on `payment` tab and all sub-screens.
 
 ### Exit criteria
 
-- [x] Showcase demonstrates shell: app bar + 3 tabs + FAB + sheet
+- [x] App shell: app bar + 3 tabs + FAB + sheet
 - [x] Toast shows/hides with animation
 - [x] Menu popover opens from app bar "more" button
 - [x] Tab active state matches mockup (yellow top indicator)
-- [ ] FAB visibility follows rules above (wired to real view state in Phase 5)
+- [x] FAB visibility follows rules above (wired to real view state in Phase 5)
 
 ---
 
@@ -185,7 +185,7 @@ Consider `components.css` if `primitives.css` + `shell.css` grow too large.
 
 ### Exit criteria
 
-- [x] Kit page demos EventCard, ActivityRow, EmptyState, ParticipantRow, Receipt with seed data
+- [x] EventCard, ActivityRow, EmptyState, ParticipantRow, Receipt render with seed data on `/`
 - Side-by-side visual match with mockup
 
 ---
@@ -233,7 +233,7 @@ src/lib/beezy/
 | Layer | Technology | What it holds |
 |-------|------------|---------------|
 | **App data** | IndexedDB | Events, activities, participants |
-| **UI view state** | `sessionStorage` or in-memory | Active tab, sub-screen, open sheet (optional persist) |
+| **UI view state** | `sessionStorage` (`beezy.view.v1`) | Active tab, sub-screen, menu. Sheets are cleared on refresh. |
 
 Database name: `beezy` (versioned schema for migrations, e.g. `settled` flag on activities).
 
@@ -260,13 +260,14 @@ From mockup ~lines 627–665:
 
 ---
 
-## Phase 5 — Tab screens 🔄
+## Phase 5 — Tab screens ✅
 
 Compose Phases 2–4 into main content areas.
 
 > **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed.
 > **5.2 done:** Events home (`Your trips` + EventCards) and event detail (stats, participants, settle up → payment). Empty states 1 & 6.
-> **5.3 done:** Activities tab — flat list, mockup empty states 2 & 3, ScreenHead + Phase 6 edit stub. Remaining: 5.4–5.6.
+> **5.3 done:** Activities tab — flat list, mockup empty states 2 & 3, ScreenHead + Phase 6 edit stub.
+> **5.4–5.6 done:** Payment home, pay-event picker, pay-activity receipt. Create/edit still stubbed until Phase 6.
 
 ### Route strategy
 
@@ -308,16 +309,18 @@ Mockup uses Option A. Either works.
 
 ### Exit criteria
 
-- All tabs navigable with seed data
-- Event detail shows stat grid + participant rows
-- Back: pay-activity → pay-event → tab home
-- FAB visibility tied to view state
+- [x] All tabs navigable with seed data
+- [x] Event detail shows stat grid + participant rows
+- [x] Back: pay-activity → pay-event → tab home
+- [x] FAB visibility tied to view state
 
 ---
 
-## Phase 6 — Sheets, forms & menu ⬜
+## Phase 6 — Sheets, forms & menu 🔄
 
 Modal flows for create/edit and global actions.
+
+> **Partial:** Reset demo data from the menu is wired (`resetDemo()`). New event, new/edit activity, and About still show placeholder toasts. `Sheet` and form atoms exist but are not connected.
 
 ### Sheets
 
@@ -338,14 +341,16 @@ Reuse Phase 1: `Field`, `Input`, `AmountInput`, `Select`, `Button`, `HintCard`, 
 
 ### Exit criteria
 
-- Create event end-to-end
-- Add / edit / delete activity
-- About sheet from menu
-- Reset demo restores Boracay + Tagaytay seed
+- [ ] Create event end-to-end
+- [ ] Add / edit / delete activity
+- [ ] About sheet from menu
+- [x] Reset demo restores Boracay + Tagaytay seed (no confirm dialog yet)
 
 ---
 
-## Phase 7 — Payment & settlement ⬜
+## Phase 7 — Payment & settlement 🔄
+
+> **Partial:** Payment tab → event picker → receipt → settle/unsettle is wired and persists to IndexedDB. Copy receipt text is a Phase 7 toast (`formatActivitySummary()` exists but is unused). Fully-settled toast copy is not the mockup string yet.
 
 ### User flow
 
@@ -372,9 +377,9 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 
 ### Exit criteria
 
-- Settle / unsettle updates store and progress UI
-- Receipt layout matches mockup (tear edge, collect breakdown)
-- Clipboard copy with fallback for older browsers
+- [x] Settle / unsettle updates store and progress UI
+- [x] Receipt layout matches mockup (tear edge, collect breakdown)
+- [ ] Clipboard copy with fallback for older browsers
 
 ---
 
@@ -383,7 +388,7 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 | Area | Task |
 |------|------|
 | Assets | Add `favicon.svg` (`+layout.svelte` currently imports missing file) |
-| Routes | Move showcase to `/kit`; `/` becomes real app |
+| Routes | `/` is already the real app. Optional: add `/kit` component gallery |
 | Meta | `theme-color`, `viewport-fit=cover` |
 | A11y | Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
 | Persistence | Verify IndexedDB across refresh |
@@ -401,54 +406,51 @@ Use when Phase 8 is near complete.
 
 ### Navigation
 
-- [ ] 3 tabs: Activities, Events, Payment
-- [ ] Back from detail / pay-event / pay-activity
-- [ ] FAB on Events always; Activities only when events exist
-- [ ] FAB hidden during sheets and sub-screens
+- [x] 3 tabs: Activities, Events, Payment
+- [x] Back from detail / pay-event / pay-activity
+- [x] FAB on Events always; Activities only when events exist
+- [x] FAB hidden during sheets and sub-screens
 
 ### Events
 
-- [ ] List with budget progress + over-budget styling
+- [x] List with budget progress + over-budget styling
 - [ ] Create event sheet
-- [ ] Event detail: stats, add participants, balances
-- [ ] Remove participant (only if they haven't paid)
-- [ ] Delete event (with confirm)
+- [x] Event detail: stats, add participants, balances
+- [x] Remove participant (only if they haven't paid) — UI gated; `store.removeParticipant()` does not enforce
+- [x] Delete event (with confirm)
 
 ### Activities
 
-- [ ] Chronological list across events
+- [x] Chronological list across events
 - [ ] Tap to edit
 - [ ] Create from FAB or event detail
 - [ ] Paid-by dropdown depends on event participants
 
 ### Payment
 
-- [ ] Event cards with settled progress
-- [ ] Per-expense picker with progress header
-- [ ] Receipt with tear edge, collect breakdown
-- [ ] Settle / unsettle / copy text
+- [x] Event cards with settled progress
+- [x] Per-expense picker with progress header
+- [x] Receipt with tear edge, collect breakdown
+- [x] Settle / unsettle
+- [ ] Copy receipt text
 
 ### Global
 
-- [ ] Menu: About, Reset demo
-- [ ] Toasts on mutations
-- [ ] Data persists in IndexedDB
-- [ ] Works offline (no network calls)
+- [ ] Menu: About sheet
+- [x] Menu: Reset demo
+- [x] Toasts on mutations
+- [x] Data persists in IndexedDB
+- [x] Works offline (no network calls)
 
 ---
 
 ## Recommended build order
 
-Minimizes rework after Phase 1:
+Remaining work:
 
-1. **Finish Phase 2** — Toast, MenuPopover, icons module
-2. **Phase 3** — EmptyState, EventCard, ActivityRow, ProgressBar
-3. **Phase 4** — types, settlement, store (can parallel Phase 3)
-4. **Phase 5** — Events + Activities tabs first
-5. **Phase 6** — New event + activity sheets
-6. **Phase 3 cont.** — Receipt, PayEventCard, ParticipantRow
-7. **Phase 7** — Payment tab + settle flow
-8. **Phase 8** — favicon, `/kit`, tests, README
+1. **Finish Phase 6** — New event sheet, new/edit activity sheet, About sheet, confirm on reset demo
+2. **Finish Phase 7** — Copy receipt text (`formatActivitySummary`), fully-settled toast copy
+3. **Phase 8** — favicon, optional `/kit`, tests, a11y, PWA
 
 ---
 
@@ -474,14 +476,18 @@ beezy-app/
         db.ts                     # IndexedDB schema + migrations
         store.ts                  # CRUD via IndexedDB
         seed.ts
+        id.ts
+        view.ts                   # sessionStorage navigation
+        activitySummary.ts
         utils.ts
-      components/ui/              # all Svelte UI components
+        components/               # EventCard, EventDetail, Receipt, …
+      components/                 # generic UI (shell, forms, atoms)
         index.ts
         icons/                    # Phase 2 — Icon.svelte + IconName
     routes/
       +layout.svelte
-      +page.svelte                # real app (Phase 5+)
-      kit/+page.svelte            # component gallery (Phase 8)
+      +page.svelte                # real app
+      kit/+page.svelte            # optional component gallery (Phase 8)
 ```
 
 ---
@@ -491,8 +497,8 @@ beezy-app/
 1. Copy CSS from `beezy-mockup.html` → `primitives.css`, `shell.css`, or `components.css`
 2. Create thin Svelte wrapper with typed props + slots
 3. Use `cn()` for conditional classes
-4. Export from `src/lib/components/ui/index.ts`
-5. Add demo section to showcase page (until `/kit` exists)
+4. Export from `src/lib/components/index.ts` (domain UI from `src/lib/beezy/components/index.ts`)
+5. Wire into `+page.svelte` (optional `/kit` gallery in Phase 8)
 6. Compare side-by-side with mockup
 
 ```svelte
@@ -516,4 +522,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 5.3 — Activities tab mockup parity (empty states 2 & 3, ScreenHead). Next: 5.4 Payment picker / 5.5–5.6.*
+*Last updated: Phase 5 complete; Phase 6/7 partial (reset demo + settle/unsettle wired). Next: Phase 6 sheets and forms.*
