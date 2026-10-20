@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import {
 		calcActivity,
 		calcEvent,
@@ -9,17 +9,25 @@
 	import { fmtDate, peso } from '$lib/beezy/format';
 	import {
 		addParticipant,
+		createActivity,
+		createEvent,
+		deleteActivity,
 		deleteEvent,
 		loadStore,
 		removeParticipant,
 		resetDemo,
 		settleActivity,
-		unsettleActivity
+		unsettleActivity,
+		updateActivity,
+		type CreateActivityInput,
+		type CreateEventInput
 	} from '$lib/beezy/store';
 	import { defaultViewState, loadView, saveView } from '$lib/beezy/view';
 	import type { Activity, Event, TabId, ViewState } from '$lib/beezy/types';
 	import {
+		AboutSheet,
 		ActivityRow,
+		ActivitySheet,
 		AppBar,
 		AppShell,
 		Button,
@@ -32,6 +40,7 @@
 		IconButton,
 		MenuItem,
 		MenuPopover,
+		NewEventSheet,
 		PayEventCard,
 		PayProgress,
 		Receipt,
@@ -186,23 +195,34 @@
 			}));
 	}
 
+	const editingActivity = $derived.by(() => {
+		const sheet = view.sheet;
+		if (sheet?.type !== 'activity' || !sheet.id) return null;
+		return activities.find((a) => a.id === sheet.id) ?? null;
+	});
+
 	/**
-	 * Drop sub-screens that point at deleted/missing records after store hydrate.
+	 * Drop sub-screens / edit sheets that point at deleted/missing records.
+	 * New-event and About sheets stay as-is; activity sheets with a missing id close.
 	 */
 	function sanitizeView(v: ViewState, evs: Event[], acts: Activity[]): ViewState {
-		const next: ViewState = { ...v, sheet: null };
+		const next: ViewState = { ...v };
 		const sub = next.sub;
-		if (!sub) return next;
 
-		if (sub.type === 'detail') {
+		if (sub?.type === 'detail') {
 			if (!evs.some((e) => e.id === sub.id)) next.sub = null;
-		} else if (sub.type === 'pay-event') {
+		} else if (sub?.type === 'pay-event') {
 			if (!evs.some((e) => e.id === sub.id)) next.sub = null;
-		} else if (sub.type === 'pay-activity') {
+		} else if (sub?.type === 'pay-activity') {
 			const { eventId, activityId } = sub;
 			const hasEvent = evs.some((e) => e.id === eventId);
 			const hasAct = acts.some((a) => a.id === activityId && a.eventId === eventId);
 			if (!hasEvent || !hasAct) next.sub = null;
+		}
+
+		const sheet = next.sheet;
+		if (sheet?.type === 'activity' && sheet.id && !acts.some((a) => a.id === sheet.id)) {
+			next.sheet = null;
 		}
 
 		return next;
@@ -259,6 +279,27 @@
 			sub: { type: 'pay-activity', eventId, activityId },
 			menu: false
 		});
+	}
+
+	function closeSheet() {
+		patchView({ sheet: null });
+	}
+
+	function openNewEventSheet() {
+		patchView({ sheet: { type: 'new-event' }, menu: false });
+	}
+
+	/** Open create (`id` null) or edit activity sheet; `eventId` presets the event select. */
+	function openActivitySheet(id: string | null = null, eventId: string | null = null) {
+		patchView({ sheet: { type: 'activity', id, eventId }, menu: false });
+	}
+
+	function openAboutSheet() {
+		patchView({ sheet: { type: 'about' }, menu: false });
+	}
+
+	function focusParticipantInput() {
+		document.getElementById('pax-name')?.focus();
 	}
 
 	function eventCardProps(ev: Event) {
@@ -322,6 +363,48 @@
 		showToast(settled ? 'Marked as settled' : 'Marked unpaid');
 	}
 
+	async function handleSaveEvent(input: CreateEventInput) {
+		const created = await createEvent(input);
+		const store = await loadStore();
+		events = store.events;
+		activities = store.activities;
+		patchView({
+			tab: 'events',
+			sub: { type: 'detail', id: created.id },
+			sheet: null,
+			menu: false
+		});
+		await tick();
+		focusParticipantInput();
+		showToast('Event created');
+	}
+
+	async function handleSaveActivity(input: CreateActivityInput) {
+		const sheet = view.sheet;
+		if (sheet?.type !== 'activity') return;
+
+		const saved = sheet.id
+			? await updateActivity(sheet.id, input)
+			: await createActivity(input);
+		if (!saved) {
+			showToast('Fill all fields');
+			return;
+		}
+
+		const editing = Boolean(sheet.id);
+		patchView({ sheet: null });
+		await refreshFromStore();
+		showToast(editing ? 'Activity updated' : 'Activity added');
+	}
+
+	async function handleDeleteActivity(id: string) {
+		const ok = await deleteActivity(id);
+		if (!ok) return;
+		patchView({ sheet: null });
+		await refreshFromStore();
+		showToast('Activity deleted');
+	}
+
 	async function handleResetDemo() {
 		closeMenu();
 		const store = await resetDemo();
@@ -369,7 +452,7 @@
 				onaddparticipant={(name: string) => handleAddParticipant(detailEvent.id, name)}
 				onfinishparticipants={() => showToast('Participants saved')}
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
-				onaddexpense={() => showToast('Add expense — Phase 6')}
+				onaddexpense={() => openActivitySheet(null, detailEvent.id)}
 				onsettleup={() => goPayEvent(detailEvent.id)}
 				ondelete={() => handleDeleteEvent(detailEvent.id)}
 			/>
@@ -468,7 +551,7 @@
 						description="Track shared expenses, split them fairly, and settle up in seconds — even with no signal."
 					>
 						{#snippet actions()}
-							<Button variant="yellow" onclick={() => showToast('New event — Phase 6')}>
+							<Button variant="yellow" onclick={openNewEventSheet}>
 								<Icon name="plus" />
 								Create your first event
 							</Button>
@@ -501,7 +584,7 @@
 						description="Who paid, for what, and how much. Beezy tracks the rest."
 					>
 						{#snippet actions()}
-							<Button variant="yellow" onclick={() => showToast('New activity — Phase 6')}>
+							<Button variant="yellow" onclick={() => openActivitySheet()}>
 								<Icon name="plus" />
 								Add activity
 							</Button>
@@ -520,7 +603,7 @@
 							createdAt={act.createdAt}
 							updatedAt={act.updatedAt}
 							eventTitle={act.eventTitle}
-							onclick={() => showToast(`Edit ${act.name} — Phase 6`)}
+							onclick={() => openActivitySheet(act.id, act.eventId)}
 						/>
 					{/each}
 				{/if}
@@ -551,7 +634,7 @@
 	<Fab
 		aria-label="Add"
 		hidden={!fabVisible || loadStatus !== 'ready'}
-		onclick={() => showToast(view.tab === 'events' ? 'New event — Phase 6' : 'New activity — Phase 6')}
+		onclick={() => (view.tab === 'events' ? openNewEventSheet() : openActivitySheet())}
 	>
 		<Icon name="plus" />
 	</Fab>
@@ -581,19 +664,29 @@
 	</TabBar>
 
 	<MenuPopover open={view.menu} onclose={closeMenu}>
-		<MenuItem
-			label="About Beezy"
-			onclick={() => {
-				closeMenu();
-				showToast('About sheet — Phase 6');
-			}}
-		>
+		<MenuItem label="About Beezy" onclick={openAboutSheet}>
 			{#snippet icon()}<Icon name="info" />{/snippet}
 		</MenuItem>
 		<MenuItem label="Reset demo data" onclick={handleResetDemo}>
 			{#snippet icon()}<Icon name="refresh" />{/snippet}
 		</MenuItem>
 	</MenuPopover>
+
+	{#if view.sheet?.type === 'new-event'}
+		<NewEventSheet onclose={closeSheet} onsave={handleSaveEvent} oninvalid={showToast} />
+	{:else if view.sheet?.type === 'activity' && (!view.sheet.id || editingActivity)}
+		<ActivitySheet
+			events={events}
+			activity={editingActivity}
+			presetEventId={view.sheet.eventId}
+			onclose={closeSheet}
+			onsave={handleSaveActivity}
+			ondelete={handleDeleteActivity}
+			oninvalid={showToast}
+		/>
+	{:else if view.sheet?.type === 'about'}
+		<AboutSheet onclose={closeSheet} />
+	{/if}
 
 	<Toast message={toastMessage} open={toastOpen} />
 </AppShell>
