@@ -407,10 +407,11 @@
 
 	async function handleResetDemo() {
 		closeMenu();
+		if (!confirm('Reset all data back to the demo trips (Boracay + Tagaytay)?')) return;
 		const store = await resetDemo();
 		events = store.events;
 		activities = store.activities;
-		patchView({ sub: null, sheet: null, tab: 'events' });
+		patchView({ tab: 'events', sub: null, sheet: null, menu: false });
 		showToast('Demo data restored');
 	}
 </script>
