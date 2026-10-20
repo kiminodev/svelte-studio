@@ -2,6 +2,8 @@
 	import { Button, Input, cn } from '$lib/components';
 
 	interface Props {
+		/** Input id so create-event can focus this field after save (mockup `#pax-name`). */
+		inputId?: string;
 		value?: string;
 		placeholder?: string;
 		class?: string;
@@ -10,6 +12,7 @@
 	}
 
 	let {
+		inputId = 'pax-name',
 		value = $bindable(''),
 		placeholder = 'Name (keeps adding until Finish)',
 		class: className = '',
@@ -26,7 +29,7 @@
 </script>
 
 <div class={cn('add-pax', className)}>
-	<Input bind:value {placeholder} autocomplete="off" {onkeydown} />
+	<Input id={inputId} bind:value {placeholder} autocomplete="off" {onkeydown} />
 	<Button variant="secondary" size="sm" type="button" onclick={onadd}>Add</Button>
 	<Button variant="yellow" size="sm" type="button" onclick={onfinish}>Finish</Button>
 </div>

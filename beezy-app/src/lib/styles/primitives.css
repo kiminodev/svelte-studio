@@ -117,6 +117,10 @@
 	stroke-linejoin: round;
 }
 
+.icon-btn-danger {
+	color: var(--danger);
+}
+
 /* Avatar */
 .avatar {
 	width: 24px;

@@ -47,7 +47,7 @@ Phase 2  App shell               ✅ Done
 Phase 3  Cards & list molecules ✅ Done
 Phase 4  Domain layer            ✅ Done
 Phase 5  Tab screens             ✅ Done
-Phase 6  Sheets, forms & menu    🔄 Partial — reset demo only; create/edit/About are toasts
+Phase 6  Sheets, forms & menu    ✅ Done
 Phase 7  Payment & settlement    🔄 Partial — receipts + settle/unsettle; copy receipt is a toast
 Phase 8  Polish & ship           ⬜ Not started
 ```
@@ -316,11 +316,11 @@ Mockup uses Option A. Either works.
 
 ---
 
-## Phase 6 — Sheets, forms & menu 🔄
+## Phase 6 — Sheets, forms & menu ✅
 
 Modal flows for create/edit and global actions.
 
-> **Partial:** Reset demo data from the menu is wired (`resetDemo()`). New event, new/edit activity, and About still show placeholder toasts. `Sheet` and form atoms exist but are not connected.
+> **Done:** New event, new/edit activity, and About sheets are connected. Reset demo asks for confirm, then restores Boracay + Tagaytay.
 
 ### Sheets
 
@@ -341,10 +341,10 @@ Reuse Phase 1: `Field`, `Input`, `AmountInput`, `Select`, `Button`, `HintCard`, 
 
 ### Exit criteria
 
-- [ ] Create event end-to-end
-- [ ] Add / edit / delete activity
-- [ ] About sheet from menu
-- [x] Reset demo restores Boracay + Tagaytay seed (no confirm dialog yet)
+- [x] Create event end-to-end
+- [x] Add / edit / delete activity
+- [x] About sheet from menu
+- [x] Reset demo restores Boracay + Tagaytay seed (native confirm)
 
 ---
 
@@ -522,4 +522,4 @@ bun run preview  # preview production build
 
 ---
 
-*Last updated: Phase 5 complete; Phase 6/7 partial (reset demo + settle/unsettle wired). Next: Phase 6 sheets and forms.*
+*Last updated: Phase 6 complete. Next: Phase 7 copy receipt text and fully-settled toast copy.*

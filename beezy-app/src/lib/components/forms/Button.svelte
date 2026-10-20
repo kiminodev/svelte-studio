@@ -10,6 +10,8 @@
 		size?: Size;
 		block?: boolean;
 		type?: 'button' | 'submit' | 'reset';
+		/** Associates a footer submit with a form in the sheet body. */
+		form?: string;
 		disabled?: boolean;
 		class?: string;
 		onclick?: (event: MouseEvent) => void;
@@ -21,6 +23,7 @@
 		size = 'default',
 		block = false,
 		type = 'button',
+		form,
 		disabled = false,
 		class: className = '',
 		onclick,
@@ -30,6 +33,7 @@
 
 <button
 	{type}
+	{form}
 	{disabled}
 	{onclick}
 	class={cn(
