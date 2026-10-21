@@ -1,6 +1,7 @@
 /**
- * KKB / Beezy design tokens — Hugging Face visual system.
+ * Beezy design tokens.
  * Sourced from beezy-mockup.html; do not redefine colors ad-hoc in components.
+ * Accent palettes swap via `html[data-theme]`.
  */
 :root {
 	--bg: #fafafa;
@@ -73,4 +74,28 @@
 	--cat-purple: #9333ea;
 	--cat-pink: #db2777;
 	--cat-orange: #ea580c;
+}
+
+html[data-theme='pink'] {
+	--accent: #f4b8cc;
+	--accent-hover: #e59ab4;
+	--surface-warm: #fff0f5;
+}
+
+html[data-theme='yellow'] {
+	--accent: #ffd21e;
+	--accent-hover: #f59e0b;
+	--surface-warm: #fff4cc;
+}
+
+html[data-theme='blue'] {
+	--accent: #b5d4ea;
+	--accent-hover: #8fbddc;
+	--surface-warm: #eef6fc;
+}
+
+html[data-theme='purple'] {
+	--accent: #d2c4ea;
+	--accent-hover: #b9a6dc;
+	--surface-warm: #f5f0fc;
 }

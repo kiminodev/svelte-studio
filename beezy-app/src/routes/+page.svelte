@@ -26,6 +26,7 @@
 	} from '$lib/beezy/store';
 	import { copyActivitySummary, copyPayerSummary } from '$lib/beezy/activitySummary';
 	import { defaultViewState, loadView, saveView } from '$lib/beezy/view';
+	import { applyTheme, loadTheme, saveTheme, type ThemeId } from '$lib/beezy/theme';
 	import type { Activity, Event, PayReceiptMode, TabId, ViewState } from '$lib/beezy/types';
 	import {
 		AboutSheet,
@@ -53,6 +54,7 @@
 		ScreenHead,
 		Tab,
 		TabBar,
+		ThemePicker,
 		Toast,
 		scheduleToastHide
 	} from '$lib';
@@ -68,8 +70,13 @@
 	let toastMessage = $state('');
 	/** Avoid writing default view to sessionStorage before hydrate. */
 	let viewHydrated = $state(false);
+	let theme = $state<ThemeId>('yellow');
 
 	onMount(() => {
+		const restoredTheme = loadTheme();
+		theme = restoredTheme;
+		applyTheme(restoredTheme);
+
 		const restored = { ...loadView(), sheet: null };
 		view = restored;
 		viewHydrated = true;
@@ -385,6 +392,12 @@
 		patchView({ sheet: { type: 'about' }, menu: false });
 	}
 
+	function handleTheme(id: ThemeId) {
+		theme = id;
+		applyTheme(id);
+		saveTheme(id);
+	}
+
 	function focusParticipantInput() {
 		document.getElementById('pax-name')?.focus();
 	}
@@ -548,7 +561,7 @@
 				</IconButton>
 			{/if}
 		{/snippet}
-		{#snippet brand()}🤗{/snippet}
+		{#snippet brand()}{/snippet}
 		{#snippet trailing()}
 			<IconButton
 				aria-label="More"
@@ -721,7 +734,7 @@
 			{#if view.tab === 'events'}
 				{#if events.length === 0}
 					<EmptyState
-						emoji="🤗"
+						emoji=""
 						title="Welcome to Beezy"
 						description="Track shared expenses, split them fairly, and settle up in seconds — even with no signal."
 					>
@@ -891,6 +904,8 @@
 		<MenuItem label="About Beezy" onclick={openAboutSheet}>
 			{#snippet icon()}<Icon name="info" />{/snippet}
 		</MenuItem>
+		<div class="menu-sep"></div>
+		<ThemePicker value={theme} onchange={handleTheme} />
 	</MenuPopover>
 
 	{#if view.sheet?.type === 'new-event'}

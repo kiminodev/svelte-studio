@@ -11,7 +11,6 @@ export type IconName =
 	| 'more'
 	| 'payment'
 	| 'plus'
-	| 'receipt'
 	| 'refresh'
 	| 'trash'
 	| 'x';

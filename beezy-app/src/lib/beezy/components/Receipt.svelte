@@ -46,7 +46,10 @@
 	<div class="receipt-strip"></div>
 	<div class="receipt-body">
 		<div class="receipt-head">
-			<div class="r-brand">🤗 Beezy</div>
+			<div class="r-brand">
+				<span class="r-brand-mark" aria-hidden="true"></span>
+				Beezy
+			</div>
 			<div class="r-title">{eventTitle}</div>
 			<div class="r-activity">{activity.name}</div>
 			<div class="r-date">{dateLabel}</div>

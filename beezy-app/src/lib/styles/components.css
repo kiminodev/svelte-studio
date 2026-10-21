@@ -538,10 +538,22 @@
 }
 
 .receipt-head .r-brand {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	font-family: var(--font-mono);
 	font-weight: 600;
 	font-size: var(--text-xl);
 	letter-spacing: 0.02em;
+}
+
+.receipt-head .r-brand-mark {
+	width: 14px;
+	height: 14px;
+	border-radius: 4px;
+	background: var(--accent);
+	flex: 0 0 auto;
 }
 
 .receipt-head .r-title {
@@ -758,6 +770,9 @@
 }
 
 .about-logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	font-family: var(--font-mono);
 	font-size: 28px;
 	font-weight: 600;

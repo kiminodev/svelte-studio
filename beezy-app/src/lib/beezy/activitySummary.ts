@@ -30,7 +30,7 @@ export function formatActivitySummary(
 	const payerName = ac.payer ? ac.payer.name : '—';
 	const lines: string[] = [];
 
-	lines.push('🤗 Beezy — ' + event.title);
+	lines.push('Beezy — ' + event.title);
 	lines.push(activity.name);
 	lines.push(fmtDateTime(activity.createdAt));
 	lines.push('----------------------------------');
@@ -122,7 +122,7 @@ export function formatPayerSummary(
 		.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 	const lines: string[] = [];
 
-	lines.push('🤗 Beezy — ' + event.title);
+	lines.push('Beezy — ' + event.title);
 	lines.push(payerName + "'s expenses");
 	lines.push(countLabel);
 	lines.push('----------------------------------');

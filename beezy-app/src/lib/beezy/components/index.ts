@@ -1,4 +1,5 @@
 export { default as AboutSheet } from './AboutSheet.svelte';
+export { default as ThemePicker } from './ThemePicker.svelte';
 export { default as ActivityRow } from './ActivityRow.svelte';
 export { default as ActivitySheet } from './ActivitySheet.svelte';
 export { default as AddParticipantRow } from './AddParticipantRow.svelte';

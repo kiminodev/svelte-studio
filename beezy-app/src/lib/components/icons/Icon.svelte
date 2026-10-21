@@ -27,11 +27,6 @@
 	</svg>
 {:else if name === 'plus'}
 	<svg class={className} viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-{:else if name === 'receipt'}
-	<svg class={className} viewBox="0 0 24 24">
-		<path d="M6 3h12v18l-2.2-1.3-2 1.3-1.8-1.3L9.8 21 8 19.7 6 21V3Z" />
-		<path d="M9 8.5h6M9 12h4" />
-	</svg>
 {:else if name === 'more'}
 	<svg class={className} viewBox="0 0 24 24">
 		<circle cx="12" cy="5" r="1.6" />
