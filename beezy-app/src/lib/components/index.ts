@@ -10,6 +10,7 @@ export { default as Fab } from './shell/Fab.svelte';
 export { default as MenuItem } from './shell/MenuItem.svelte';
 export { default as MenuPopover } from './shell/MenuPopover.svelte';
 export { default as Screen } from './shell/Screen.svelte';
+export { default as ConfirmSheet } from './shell/ConfirmSheet.svelte';
 export { default as Sheet } from './shell/Sheet.svelte';
 export { default as Tab } from './shell/Tab.svelte';
 export { default as TabBar } from './shell/TabBar.svelte';

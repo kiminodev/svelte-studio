@@ -193,6 +193,52 @@
 	display: none;
 }
 
+.overlay-confirm {
+	z-index: 50;
+	align-items: center;
+	justify-content: center;
+	background: color-mix(in oklab, var(--fg) 40%, transparent);
+	padding: 24px;
+}
+
+.overlay-confirm .sheet-body {
+	flex: 0 0 auto;
+	width: min(100%, 320px);
+	padding: 0;
+	overflow: visible;
+}
+
+.confirm-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 22px 20px 18px;
+	text-align: center;
+	box-shadow: 0 16px 40px color-mix(in oklab, var(--fg), transparent 82%);
+}
+
+.confirm-card h3 {
+	font-size: var(--text-lg);
+	font-weight: 600;
+	letter-spacing: var(--tracking-display);
+}
+
+.confirm-copy {
+	margin-top: 8px;
+	font-size: var(--text-sm);
+	color: var(--fg-2);
+	line-height: var(--leading-body);
+	text-wrap: pretty;
+}
+
+.confirm-actions {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 18px;
+}
+
 .sheet-head {
 	display: flex;
 	align-items: center;

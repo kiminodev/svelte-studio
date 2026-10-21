@@ -378,7 +378,6 @@
 	}
 
 	async function handleDeleteEvent(eventId: string) {
-		if (!confirm('Delete this event and all its expenses?')) return;
 		const ok = await deleteEvent(eventId);
 		if (!ok) return;
 		patchView({ sub: null });

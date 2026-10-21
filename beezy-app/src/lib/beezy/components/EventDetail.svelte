@@ -12,6 +12,7 @@
 	import ParticipantRow from './ParticipantRow.svelte';
 	import {
 		Button,
+		ConfirmSheet,
 		Divider,
 		HintCard,
 		Icon,
@@ -47,6 +48,18 @@
 	}: Props = $props();
 
 	let paxName = $state('');
+	let pendingDelete = $state<null | { kind: 'event' } | { kind: 'person'; id: string; name: string }>(
+		null
+	);
+
+	const confirmMessage = $derived(
+		pendingDelete?.kind === 'person'
+			? `${pendingDelete.name} will be taken off this trip. You can add them again later.`
+			: 'This deletes the trip and every expense in it. You cannot undo this.'
+	);
+	const confirmLabel = $derived(
+		pendingDelete?.kind === 'person' ? 'Remove' : 'Delete trip'
+	);
 
 	const full = $derived(calcEvent(event, event.activities));
 	const outstanding = $derived(calcOutstanding(event, event.activities));
@@ -67,6 +80,17 @@
 		if (!name) return;
 		onaddparticipant?.(name);
 		paxName = '';
+	}
+
+	function handleConfirmDelete() {
+		const pending = pendingDelete;
+		pendingDelete = null;
+		if (!pending) return;
+		if (pending.kind === 'person') {
+			onremoveparticipant?.(pending.id);
+			return;
+		}
+		ondelete?.();
 	}
 </script>
 
@@ -103,7 +127,7 @@
 			paid={paidForParticipant(p.id)}
 			balance={row?.balance ?? 0}
 			removable={canRemoveParticipant(p.id, event.activities)}
-			onremove={() => onremoveparticipant?.(p.id)}
+			onremove={() => (pendingDelete = { kind: 'person', id: p.id, name: p.name })}
 		/>
 	{/each}
 
@@ -122,7 +146,16 @@
 
 <Divider />
 
-<Button variant="danger" size="sm" type="button" onclick={ondelete}>
+<Button variant="danger" size="sm" type="button" onclick={() => (pendingDelete = { kind: 'event' })}>
 	<Icon name="trash" />
 	Delete event
 </Button>
+
+<ConfirmSheet
+	open={pendingDelete !== null}
+	title="Are you sure?"
+	message={confirmMessage}
+	confirmLabel={confirmLabel}
+	oncancel={() => (pendingDelete = null)}
+	onconfirm={handleConfirmDelete}
+/>

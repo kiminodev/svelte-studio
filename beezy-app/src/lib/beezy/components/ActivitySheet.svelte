@@ -11,7 +11,8 @@
 		IconButton,
 		Input,
 		Select,
-		Sheet
+		Sheet,
+		ConfirmSheet
 	} from '$lib/components';
 
 	interface Props {
@@ -38,6 +39,7 @@
 
 	const editing = $derived(Boolean(activity));
 	const formId = 'form-activity';
+	let confirmDelete = $state(false);
 
 	function initialEventId(): string {
 		return activity?.eventId ?? presetEventId ?? events[0]?.id ?? '';
@@ -95,11 +97,10 @@
 			</IconButton>
 			<h3>{editing ? 'Edit activity' : 'New activity'}</h3>
 			{#if activity}
-				{@const activityId = activity.id}
 				<IconButton
 					aria-label="Delete"
 					class="icon-btn-danger"
-					onclick={() => ondelete?.(activityId)}
+					onclick={() => (confirmDelete = true)}
 				>
 					<Icon name="trash" />
 				</IconButton>
@@ -157,3 +158,16 @@
 		</Button>
 	{/snippet}
 </Sheet>
+
+<ConfirmSheet
+	open={confirmDelete}
+	title="Are you sure?"
+	message="This expense will be gone for good. You cannot undo this."
+	confirmLabel="Delete expense"
+	oncancel={() => (confirmDelete = false)}
+	onconfirm={() => {
+		const activityId = activity?.id;
+		confirmDelete = false;
+		if (activityId) ondelete?.(activityId);
+	}}
+/>
