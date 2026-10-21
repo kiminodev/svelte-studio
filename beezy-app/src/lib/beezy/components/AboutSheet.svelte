@@ -24,22 +24,19 @@
 		<Divider />
 		<ul class="about-list">
 			<li>
-				<b>Offline-first.</b> Everything is saved on this device in <code>IndexedDB</code>. No
-				account, no signal needed.
+				<b>Works without signal.</b> Everything stays on this phone. No account, no internet needed.
 			</li>
 			<li>
-				<b>Equal split.</b> Each member's share of an expense = price ÷ number of people.
+				<b>Split equally.</b> Everyone pays the same share of each expense.
 			</li>
 			<li>
-				<b>Settle per expense.</b> In Payment, pick an expense, screenshot the receipt, and tap
-				<b>Settle</b> once everyone chips in. An event is settled when all its expenses are.
+				<b>Settle one expense at a time.</b> Open a receipt, share a screenshot, and tap
+				<b>Settle</b> when everyone has paid. A trip is done when every expense is settled.
 			</li>
 			<li>
-				<b>Shareable.</b> Screenshot the receipt or copy a text summary into the group chat.
+				<b>Easy to share.</b> Screenshot the receipt or copy the summary into the group chat.
 			</li>
 		</ul>
-		<Divider />
-		<p class="muted-block about-foot">Prototype · Hugging Face design direction · ₱ PHP</p>
 	{/snippet}
 	{#snippet foot()}
 		<Button variant="secondary" block onclick={onclose}>Close</Button>

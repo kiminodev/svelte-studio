@@ -71,7 +71,7 @@
 				/>
 			</Field>
 			<p class="muted-block sheet-note">
-				After creating, tap the event to add participants and log expenses.
+				After creating, tap the trip to add friends and log expenses.
 			</p>
 		</form>
 	{/snippet}

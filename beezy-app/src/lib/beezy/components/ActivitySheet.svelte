@@ -11,7 +11,8 @@
 		IconButton,
 		Input,
 		Select,
-		Sheet
+		Sheet,
+		ConfirmSheet
 	} from '$lib/components';
 
 	interface Props {
@@ -38,6 +39,7 @@
 
 	const editing = $derived(Boolean(activity));
 	const formId = 'form-activity';
+	let confirmDelete = $state(false);
 
 	function initialEventId(): string {
 		return activity?.eventId ?? presetEventId ?? events[0]?.id ?? '';
@@ -95,11 +97,10 @@
 			</IconButton>
 			<h3>{editing ? 'Edit activity' : 'New activity'}</h3>
 			{#if activity}
-				{@const activityId = activity.id}
 				<IconButton
 					aria-label="Delete"
 					class="icon-btn-danger"
-					onclick={() => ondelete?.(activityId)}
+					onclick={() => (confirmDelete = true)}
 				>
 					<Icon name="trash" />
 				</IconButton>
@@ -135,7 +136,7 @@
 			<Field label="Paid by" for="act-paidby" required>
 				<Select id="act-paidby" name="paidById" bind:value={paidById} required>
 					{#if noParticipants}
-						<option value="">— add participants first —</option>
+						<option value="">— add friends first —</option>
 					{:else}
 						{#each participants as p (p.id)}
 							<option value={p.id}>{p.name}</option>
@@ -145,7 +146,7 @@
 			</Field>
 			{#if noParticipants}
 				<HintCard emoji="💡">
-					This event has no participants yet. Add them from the event screen so balances compute.
+					This trip has no one on it yet. Add friends from the trip screen so Beezy can split the bill.
 				</HintCard>
 			{/if}
 		</form>
@@ -157,3 +158,16 @@
 		</Button>
 	{/snippet}
 </Sheet>
+
+<ConfirmSheet
+	open={confirmDelete}
+	title="Are you sure?"
+	message="This expense will be gone for good. You cannot undo this."
+	confirmLabel="Delete expense"
+	oncancel={() => (confirmDelete = false)}
+	onconfirm={() => {
+		const activityId = activity?.id;
+		confirmDelete = false;
+		if (activityId) ondelete?.(activityId);
+	}}
+/>

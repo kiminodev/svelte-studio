@@ -50,7 +50,7 @@
 		<span class="event-budget-tag">Budget {peso(budget)}</span>
 	</div>
 	<div class="event-meta">
-		<span><b>{paxCount}</b> pax</span>
+		<span><b>{paxCount}</b> {paxCount === 1 ? 'person' : 'people'}</span>
 		<span><b>{activityCount}</b> activities</span>
 		<span>Spent <b>{peso(spent)}</b></span>
 	</div>

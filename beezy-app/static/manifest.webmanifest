@@ -1,7 +1,7 @@
 {
 	"name": "Beezy",
 	"short_name": "Beezy",
-	"description": "Equal-split group budget tracker for friends who travel together.",
+	"description": "Split trip costs fairly with friends.",
 	"id": "/",
 	"start_url": "/",
 	"scope": "/",

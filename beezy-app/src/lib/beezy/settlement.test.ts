@@ -161,20 +161,20 @@ describe('canRemoveParticipant', () => {
 
 describe('payEventSummary', () => {
 	test('no expenses', () => {
-		expect(payEventSummary([], 4, 0)).toBe('4 pax · no expenses yet');
+		expect(payEventSummary([], 4, 0)).toBe('4 people · no expenses yet');
 	});
 
 	test('partially settled', () => {
 		const acts = [act(100, 'p1', true), act(100, 'p2', false), act(100, 'p3', false)];
 		expect(payEventSummary(acts, 4, 300)).toBe(
-			`1/3 settled · ${peso(300)} spent · 4 pax`
+			`1/3 settled · ${peso(300)} spent · 4 people`
 		);
 	});
 
 	test('all settled', () => {
 		const acts = [act(100, 'p1', true), act(200, 'p2', true)];
 		expect(payEventSummary(acts, 4, 300)).toBe(
-			`All settled · ${peso(300)} spent · 4 pax`
+			`All settled · ${peso(300)} spent · 4 people`
 		);
 	});
 });
