@@ -135,7 +135,7 @@
 			<Field label="Paid by" for="act-paidby" required>
 				<Select id="act-paidby" name="paidById" bind:value={paidById} required>
 					{#if noParticipants}
-						<option value="">— add participants first —</option>
+						<option value="">— add friends first —</option>
 					{:else}
 						{#each participants as p (p.id)}
 							<option value={p.id}>{p.name}</option>
@@ -145,7 +145,7 @@
 			</Field>
 			{#if noParticipants}
 				<HintCard emoji="💡">
-					This event has no participants yet. Add them from the event screen so balances compute.
+					This trip has no one on it yet. Add friends from the trip screen so Beezy can split the bill.
 				</HintCard>
 			{/if}
 		</form>

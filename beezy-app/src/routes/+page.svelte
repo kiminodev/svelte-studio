@@ -76,10 +76,10 @@
 				view = sanitizeView(view, store.events, store.activities);
 				loadStatus = 'ready';
 			})
-			.catch((err: unknown) => {
+			.catch(() => {
 				loadStatus = 'error';
 				loadError =
-					err instanceof Error ? err.message : 'Could not open offline storage';
+					"Beezy couldn't save on this phone. Turn off private browsing if it's on, or free up some space, then try again.";
 			});
 	});
 
@@ -154,7 +154,7 @@
 		if (detailEvent) {
 			return {
 				title: detailEvent.title,
-				subtitle: 'Participants & balances',
+				subtitle: "Who's in, and who owes",
 				back: true
 			};
 		}
@@ -408,7 +408,7 @@
 	async function handleCopyReceipt() {
 		if (!payActivity || !payEvent) return;
 		const ok = await copyActivitySummary(payActivity, payEvent);
-		showToast(ok ? 'Copied to clipboard' : 'Copy failed — screenshot the receipt');
+		showToast(ok ? 'Copied — paste it in the chat' : "Couldn't copy — screenshot the receipt instead");
 	}
 
 	async function handleSaveEvent(input: CreateEventInput) {
@@ -481,9 +481,9 @@
 		{:else if loadStatus === 'error'}
 			<EmptyState
 				emoji="⚠️"
-				title="Storage unavailable"
+				title="Can't save trips yet"
 				description={loadError ||
-					'Beezy needs IndexedDB to save trips offline. Try leaving private browsing or freeing disk space.'}
+					"Beezy couldn't save on this phone. Turn off private browsing if it's on, or free up some space, then try again."}
 			/>
 		{:else if detailEvent}
 			<EventDetail
@@ -594,7 +594,7 @@
 				{:else}
 					<ScreenHead
 						title="Your trips"
-						description={hiddenListHint('Pick an event to manage participants or settle up.')}
+						description={hiddenListHint('Pick a trip to add friends or settle up.')}
 					>
 						{#snippet actions()}
 							{@render hideDoneToggle()}

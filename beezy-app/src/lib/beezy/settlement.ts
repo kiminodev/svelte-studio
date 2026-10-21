@@ -87,11 +87,12 @@ export function payEventSummary(
 ): string {
 	const settledCount = activities.filter((a) => a.settled).length;
 	const allSettled = activities.length > 0 && activities.every((a) => a.settled);
-	if (!activities.length) return `${participantCount} pax · no expenses yet`;
+	const people = participantCount === 1 ? '1 person' : `${participantCount} people`;
+	if (!activities.length) return `${people} · no expenses yet`;
 	if (allSettled) {
-		return `All settled · ${peso(totalSpent)} spent · ${participantCount} pax`;
+		return `All settled · ${peso(totalSpent)} spent · ${people}`;
 	}
-	return `${settledCount}/${activities.length} settled · ${peso(totalSpent)} spent · ${participantCount} pax`;
+	return `${settledCount}/${activities.length} settled · ${peso(totalSpent)} spent · ${people}`;
 }
 
 /** Participant can be removed only if they have not paid for any expense. */
