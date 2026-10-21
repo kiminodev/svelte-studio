@@ -395,7 +395,7 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 | A11y | [x] Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
 | Persistence [x]| Verify IndexedDB across refresh |
 | Responsive | [x] 440px phone frame + desktop backdrop |
-| PWA (optional) | manifest, service worker |
+| PWA (optional) | [x] `manifest.webmanifest` + `src/service-worker.ts` (production) |
 | Tests | [x] `settlement.ts` unit tests (`bun test`) |
 | CI | `bun run check` + build |
 | README | Keep in sync with this PRD |
