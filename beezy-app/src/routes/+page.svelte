@@ -500,7 +500,6 @@
 			<EventDetail
 				event={detailEvent}
 				onaddparticipant={(name: string) => handleAddParticipant(detailEvent.id, name)}
-				onfinishparticipants={() => showToast('Participants saved')}
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => openActivitySheet(null, detailEvent.id)}
 				onsettleup={() => goPayEvent(detailEvent.id)}

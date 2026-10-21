@@ -8,16 +8,14 @@
 		placeholder?: string;
 		class?: string;
 		onadd?: () => void;
-		onfinish?: () => void;
 	}
 
 	let {
 		inputId = 'pax-name',
 		value = $bindable(''),
-		placeholder = 'Name (keeps adding until Finish)',
+		placeholder = 'e.g. Mika',
 		class: className = '',
-		onadd,
-		onfinish
+		onadd
 	}: Props = $props();
 
 	function onkeydown(event: KeyboardEvent) {
@@ -30,6 +28,5 @@
 
 <div class={cn('add-pax', className)}>
 	<Input id={inputId} bind:value {placeholder} autocomplete="off" {onkeydown} />
-	<Button variant="secondary" size="sm" type="button" onclick={onadd}>Add</Button>
-	<Button variant="yellow" size="sm" type="button" onclick={onfinish}>Finish</Button>
+	<Button variant="yellow" size="sm" type="button" onclick={onadd}>Add</Button>
 </div>

@@ -7,6 +7,7 @@ import {
 } from '$lib/beezy/db';
 import { uid } from '$lib/beezy/id';
 import { seedData } from '$lib/beezy/seed';
+import { canRemoveParticipant } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
 export interface CreateEventInput {
@@ -182,16 +183,48 @@ export async function addParticipant(eventId: string, name: string): Promise<Par
 	return participant;
 }
 
-/** Remove a participant from an event. Returns `false` when not found. */
+/**
+ * Remove a participant from an event.
+ * Returns `false` when the event/id is missing, or when they paid for any
+ * activity on that event (same rule as {@link canRemoveParticipant}).
+ */
 export async function removeParticipant(eventId: string, participantId: string): Promise<boolean> {
-	const event = await getEventById(eventId);
-	if (!event) return false;
+	const db = await openDb();
+	let removed = false;
 
-	const participants = event.participants.filter((p) => p.id !== participantId);
-	if (participants.length === event.participants.length) return false;
+	await new Promise<void>((resolve, reject) => {
+		const tx = db.transaction([STORES.events, STORES.activities], 'readwrite');
+		tx.oncomplete = () => resolve();
+		tx.onerror = () => reject(tx.error);
+		tx.onabort = () =>
+			reject(tx.error ?? new Error('removeParticipant transaction aborted'));
 
-	await writeOne(STORES.events, { ...event, participants });
-	return true;
+		const eventsStore = tx.objectStore(STORES.events);
+		const activitiesStore = tx.objectStore(STORES.activities);
+		const getReq = eventsStore.get(eventId);
+
+		getReq.onsuccess = () => {
+			const event = getReq.result as Event | undefined;
+			if (!event) return;
+			if (!event.participants.some((p) => p.id === participantId)) return;
+
+			const actsReq = activitiesStore.index('byEvent').getAll(eventId);
+			actsReq.onsuccess = () => {
+				const activities = (actsReq.result as Activity[]).map(migrateActivitySettled);
+				if (!canRemoveParticipant(participantId, activities)) return;
+
+				eventsStore.put({
+					...event,
+					participants: event.participants.filter((p) => p.id !== participantId)
+				});
+				removed = true;
+			};
+			actsReq.onerror = () => tx.abort();
+		};
+		getReq.onerror = () => tx.abort();
+	});
+
+	return removed;
 }
 
 /**

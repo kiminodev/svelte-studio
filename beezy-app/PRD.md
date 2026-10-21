@@ -49,7 +49,7 @@ Phase 4  Domain layer            ✅ Done
 Phase 5  Tab screens             ✅ Done
 Phase 6  Sheets, forms & menu    ✅ Done
 Phase 7  Payment & settlement    ✅ Done
-Phase 8  Polish & ship           ⬜ Not started
+Phase 8  Polish & ship           ✅ Done (`/kit` skipped)
 ```
 
 ---
@@ -186,7 +186,7 @@ Consider `components.css` if `primitives.css` + `shell.css` grow too large.
 ### Exit criteria
 
 - [x] EventCard, ActivityRow, EmptyState, ParticipantRow, Receipt render with seed data on `/`
-- Side-by-side visual match with mockup
+- [x] Side-by-side visual match with mockup
 
 ---
 
@@ -208,7 +208,8 @@ Port mockup data model and business logic into typed TypeScript — no UI.
   tab: 'events' | 'activities' | 'payment',
   sub: { type: 'detail' | 'pay-event' | 'pay-activity', ... } | null,
   sheet: { type: 'new-event' | 'activity' | 'about', ... } | null,
-  menu: boolean
+  menu: boolean,
+  hideDone: boolean
 }
 ```
 
@@ -252,7 +253,7 @@ From mockup ~lines 627–665:
 
 ### Exit criteria
 
-- [x] Pure settlement functions are unit-testable (tests deferred to Phase 8)
+- [x] Pure settlement functions are unit-testable (`src/lib/beezy/settlement.test.ts`)
 - [x] Store reads/writes IndexedDB with `settled` migration
 - [x] Copy text format matches mockup output (Beezy branding instead of legacy KKB label)
 
@@ -266,8 +267,8 @@ Compose Phases 2–4 into main content areas.
 
 > **5.1 done:** `+page.svelte` loads IndexedDB via `loadStore()`, drives UI from `ViewState` + `loadView`/`saveView`, no inline seed.
 > **5.2 done:** Events home (`Your trips` + EventCards) and event detail (stats, participants, settle up → payment). Empty states 1 & 6.
-> **5.3 done:** Activities tab — flat list, mockup empty states 2 & 3, ScreenHead + Phase 6 edit stub.
-> **5.4–5.6 done:** Payment home, pay-event picker, pay-activity receipt. Create/edit still stubbed until Phase 6.
+> **5.3 done:** Activities tab — flat list, mockup empty states 2 & 3, tap row to edit (Phase 6).
+> **5.4–5.6 done:** Payment home, pay-event picker, pay-activity receipt. Create/edit wired in Phase 6.
 
 ### Route strategy
 
@@ -385,20 +386,20 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 
 ---
 
-## Phase 8 — Polish & ship ⬜
+## Phase 8 — Polish & ship ✅
 
 | Area | Task |
 |------|------|
-| Assets | Add `favicon.svg` (`+layout.svelte` currently imports missing file) |
-| Routes | `/` is already the real app. Optional: add `/kit` component gallery |
-| Meta | `theme-color`, `viewport-fit=cover` |
-| A11y | Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
-| Persistence | Verify IndexedDB across refresh |
-| Responsive | 440px phone frame + desktop backdrop |
-| PWA (optional) | manifest, service worker |
-| Tests | `settlement.ts` unit tests |
-| CI | `bun run check` + build |
-| README | Keep in sync with this PRD |
+| Assets | [x] `favicon.svg` (yellow hug face, wired in `+layout.svelte`) |
+| Routes | [x] `/` is the real app. Optional `/kit` gallery **skipped** |
+| Meta | [x] `theme-color`, `viewport-fit=cover` |
+| A11y | [x] Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
+| Persistence | [x] IndexedDB across refresh |
+| Responsive | [x] 440px phone frame + desktop backdrop |
+| PWA (optional) | [x] `manifest.webmanifest` + `src/service-worker.ts` (production) |
+| Tests | [x] `settlement.ts` unit tests (`bun test`) |
+| CI | [x] GitHub Actions: `bun run check` + `bun test` + `bun run build` |
+| README | [x] In sync with this PRD |
 
 ---
 
@@ -416,17 +417,17 @@ Use when Phase 8 is near complete.
 ### Events
 
 - [x] List with budget progress + over-budget styling
-- [ ] Create event sheet
+- [x] Create event sheet
 - [x] Event detail: stats, add participants, balances
-- [x] Remove participant (only if they haven't paid) — UI gated; `store.removeParticipant()` does not enforce
+- [x] Remove participant (only if they haven't paid) — UI gated and `store.removeParticipant()` enforces
 - [x] Delete event (with confirm)
 
 ### Activities
 
 - [x] Chronological list across events
-- [ ] Tap to edit
-- [ ] Create from FAB or event detail
-- [ ] Paid-by dropdown depends on event participants
+- [x] Tap to edit
+- [x] Create from FAB or event detail
+- [x] Paid-by dropdown depends on event participants
 
 ### Payment
 
@@ -438,11 +439,12 @@ Use when Phase 8 is near complete.
 
 ### Global
 
-- [ ] Menu: About sheet
+- [x] Menu: About sheet
 - [x] Menu: Reset demo
 - [x] Toasts on mutations
+- [x] Hide done / Show done for fully settled trips
 - [x] Data persists in IndexedDB
-- [x] Works offline (no network calls)
+- [x] Works offline (IndexedDB + production service worker)
 
 ---
 
@@ -450,16 +452,16 @@ Use when Phase 8 is near complete.
 
 Remaining work:
 
-1. **Phase 8** — favicon, optional `/kit`, tests, a11y, PWA
+1. Optional `/kit` component gallery — skipped; `/` is the real app
 
 ---
 
 ## Target file structure
 
 ```
+.github/workflows/ci.yml          # bun check + test + build
 beezy-app/
   PRD.md                          ← this file
-  static/beezy-mockup.html        ← visual + behavior spec
   src/
     lib/
       styles/
@@ -473,6 +475,7 @@ beezy-app/
         types.ts                  # Phase 4
         format.ts
         settlement.ts
+        settlement.test.ts        # Phase 8
         db.ts                     # IndexedDB schema + migrations
         store.ts                  # CRUD via IndexedDB
         seed.ts
@@ -484,10 +487,17 @@ beezy-app/
       components/                 # generic UI (shell, forms, atoms)
         index.ts
         icons/                    # Phase 2 — Icon.svelte + IconName
+      assets/
+        favicon.svg               # Phase 8
+    service-worker.ts             # Phase 8 PWA
     routes/
       +layout.svelte
       +page.svelte                # real app
-      kit/+page.svelte            # optional component gallery (Phase 8)
+  static/
+    beezy-mockup.html
+    manifest.webmanifest
+    apple-touch-icon.png
+    icons/
 ```
 
 ---
@@ -498,7 +508,7 @@ beezy-app/
 2. Create thin Svelte wrapper with typed props + slots
 3. Use `cn()` for conditional classes
 4. Export from `src/lib/components/index.ts` (domain UI from `src/lib/beezy/components/index.ts`)
-5. Wire into `+page.svelte` (optional `/kit` gallery in Phase 8)
+5. Wire into `+page.svelte`
 6. Compare side-by-side with mockup
 
 ```svelte
@@ -516,10 +526,11 @@ beezy-app/
 cd beezy-app
 bun run dev      # local dev (http://localhost:5173)
 bun run check    # TypeScript + Svelte check
+bun test         # settlement unit tests
 bun run build    # production build
-bun run preview  # preview production build
+bun run preview  # preview production build (service worker registers here)
 ```
 
 ---
 
-*Last updated: Phase 7 complete. Next: Phase 8 polish & ship.*
+*Last updated: Phase 8 complete. Optional `/kit` gallery skipped.*
