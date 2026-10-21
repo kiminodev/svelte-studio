@@ -252,7 +252,7 @@ From mockup ~lines 627–665:
 
 ### Exit criteria
 
-- [x] Pure settlement functions are unit-testable (tests deferred to Phase 8)
+- [x] Pure settlement functions are unit-testable (`src/lib/beezy/settlement.test.ts`)
 - [x] Store reads/writes IndexedDB with `settled` migration
 - [x] Copy text format matches mockup output (Beezy branding instead of legacy KKB label)
 
@@ -396,7 +396,7 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 | Persistence | Verify IndexedDB across refresh |
 | Responsive | [x] 440px phone frame + desktop backdrop |
 | PWA (optional) | manifest, service worker |
-| Tests | `settlement.ts` unit tests |
+| Tests | [x] `settlement.ts` unit tests (`bun test`) |
 | CI | `bun run check` + build |
 | README | Keep in sync with this PRD |
 
