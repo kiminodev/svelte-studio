@@ -222,7 +222,6 @@ src/lib/beezy/
   settlement.ts       — tally(), calcEvent(), calcOutstanding(), calcActivity(), isEventSettled() [x]
   db.ts               — IndexedDB open, schema, migrations [x]
   store.ts            — CRUD for events & activities via IndexedDB [x]
-  seed.ts             — seedData() (Boracay + Tagaytay demo) [x]
   id.ts               — uid() [x]
   utils.ts            — initials(), avatarIndex() (Phase 1) [x]
   activitySummary.ts  — formatActivitySummary() (copy-to-clipboard text) [x]
@@ -321,7 +320,7 @@ Mockup uses Option A. Either works.
 
 Modal flows for create/edit and global actions.
 
-> **Done:** New event, new/edit activity, and About sheets are connected. Reset demo asks for confirm, then restores Boracay + Tagaytay.
+> **Done:** New event, new/edit activity, and About sheets are connected. First visit is empty.
 
 ### Sheets
 
@@ -336,7 +335,7 @@ Modal flows for create/edit and global actions.
 - **New event** → save → close sheet → open event detail → focus participant input
 - **Activity sheet** → paid-by options update when event changes
 - **Edit activity** → delete button in sheet head
-- **Menu** → About, Reset demo data (with confirm)
+- **Menu** → About
 
 Reuse Phase 1: `Field`, `Input`, `AmountInput`, `Select`, `Button`, `HintCard`, `Sheet`.
 
@@ -345,7 +344,6 @@ Reuse Phase 1: `Field`, `Input`, `AmountInput`, `Select`, `Button`, `HintCard`, 
 - [x] Create event end-to-end
 - [x] Add / edit / delete activity
 - [x] About sheet from menu
-- [x] Reset demo restores Boracay + Tagaytay seed (native confirm)
 
 ---
 
@@ -440,7 +438,6 @@ Use when Phase 8 is near complete.
 ### Global
 
 - [x] Menu: About sheet
-- [x] Menu: Reset demo
 - [x] Toasts on mutations
 - [x] Hide done / Show done for fully settled trips
 - [x] Data persists in IndexedDB
@@ -478,7 +475,6 @@ beezy-app/
         settlement.test.ts        # Phase 8
         db.ts                     # IndexedDB schema + migrations
         store.ts                  # CRUD via IndexedDB
-        seed.ts
         id.ts
         view.ts                   # sessionStorage navigation
         activitySummary.ts

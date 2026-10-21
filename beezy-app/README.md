@@ -40,7 +40,7 @@ bun install
 bun run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). First visit seeds two demo trips (Boracay + Tagaytay).
+Open [http://localhost:5173](http://localhost:5173). First visit is empty — create an event to get started.
 
 ```sh
 bun run check    # svelte-check + TypeScript
@@ -69,7 +69,7 @@ User action → store.ts write → refresh events/activities → re-render
 src/routes/+page.svelte      # app controller — screens, handlers, reactive state
 src/service-worker.ts        # production app-shell cache
 src/lib/components/          # generic UI (shell, forms, atoms)
-src/lib/beezy/               # domain: types, IndexedDB, store, settlement, seed
+src/lib/beezy/               # domain: types, IndexedDB, store, settlement
 src/lib/beezy/components/    # event/activity/payment UI
 src/lib/assets/favicon.svg
 src/lib/styles/              # tokens, primitives, shell, component CSS

@@ -15,7 +15,6 @@
 		deleteEvent,
 		loadStore,
 		removeParticipant,
-		resetDemo,
 		settleActivity,
 		unsettleActivity,
 		updateActivity,
@@ -453,16 +452,6 @@
 		await refreshFromStore();
 		showToast('Activity deleted');
 	}
-
-	async function handleResetDemo() {
-		closeMenu();
-		if (!confirm('Reset all data back to the demo trips (Boracay + Tagaytay)?')) return;
-		const store = await resetDemo();
-		events = store.events;
-		activities = store.activities;
-		patchView({ tab: 'events', sub: null, sheet: null, menu: false });
-		showToast('Demo data restored');
-	}
 </script>
 
 <AppShell>
@@ -760,9 +749,6 @@
 	<MenuPopover open={view.menu} onclose={closeMenu}>
 		<MenuItem label="About Beezy" onclick={openAboutSheet}>
 			{#snippet icon()}<Icon name="info" />{/snippet}
-		</MenuItem>
-		<MenuItem label="Reset demo data" onclick={handleResetDemo}>
-			{#snippet icon()}<Icon name="refresh" />{/snippet}
 		</MenuItem>
 	</MenuPopover>
 
