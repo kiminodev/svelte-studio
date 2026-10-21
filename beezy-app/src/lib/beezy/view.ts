@@ -10,7 +10,7 @@ const VALID_TABS: ReadonlySet<TabId> = new Set(['events', 'activities', 'payment
 
 /** Default navigation state on first visit or when sessionStorage is unavailable. */
 export function defaultViewState(): ViewState {
-	return { tab: 'events', sub: null, sheet: null, menu: false };
+	return { tab: 'events', sub: null, sheet: null, menu: false, hideDone: false };
 }
 
 /**
@@ -60,6 +60,7 @@ function normalizeViewState(value: unknown): ViewState {
 		tab,
 		sub: v.sub ?? null,
 		sheet: v.sheet ?? null,
-		menu: Boolean(v.menu)
+		menu: Boolean(v.menu),
+		hideDone: Boolean(v.hideDone)
 	};
 }

@@ -54,8 +54,8 @@
 	<span class="act-name">
 		<Avatar name={paidByName} />
 		<span class="act-title">{name}</span>
-		{#if variant === 'payment' && settled}
-			<Chip variant="paid">settled</Chip>
+		{#if settled}
+			<Chip variant="settled">settled</Chip>
 		{/if}
 	</span>
 	<span class="act-price">{peso(price)}</span>

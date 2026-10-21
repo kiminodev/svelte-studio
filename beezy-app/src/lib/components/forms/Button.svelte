@@ -13,6 +13,7 @@
 		/** Associates a footer submit with a form in the sheet body. */
 		form?: string;
 		disabled?: boolean;
+		'aria-pressed'?: boolean | 'true' | 'false' | 'mixed';
 		class?: string;
 		onclick?: (event: MouseEvent) => void;
 		children?: Snippet;
@@ -25,6 +26,7 @@
 		type = 'button',
 		form,
 		disabled = false,
+		'aria-pressed': ariaPressed,
 		class: className = '',
 		onclick,
 		children
@@ -35,6 +37,7 @@
 	{type}
 	{form}
 	{disabled}
+	aria-pressed={ariaPressed}
 	{onclick}
 	class={cn(
 		'btn',

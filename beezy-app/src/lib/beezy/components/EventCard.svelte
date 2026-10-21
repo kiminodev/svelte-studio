@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { peso, fmtDate } from '$lib/beezy/format';
-	import { Eyebrow, ProgressBar, cn } from '$lib/components';
+	import { Chip, Eyebrow, ProgressBar, cn } from '$lib/components';
 
 	interface Props {
 		title: string;
@@ -9,6 +9,7 @@
 		paxCount: number;
 		activityCount: number;
 		spent: number;
+		settled?: boolean;
 		type?: 'button' | 'submit' | 'reset';
 		disabled?: boolean;
 		class?: string;
@@ -22,6 +23,7 @@
 		paxCount,
 		activityCount,
 		spent,
+		settled = false,
 		type = 'button',
 		disabled = false,
 		class: className = '',
@@ -36,10 +38,13 @@
 	);
 </script>
 
-<button {type} {disabled} {onclick} class={cn('event-card', className)}>
+<button {type} {disabled} {onclick} class={cn('event-card', settled && 'is-settled', className)}>
 	<div class="event-card-top">
 		<div>
-			<h3>{title}</h3>
+			<div class="event-card-title">
+				<h3>{title}</h3>
+				{#if settled}<Chip variant="settled">settled</Chip>{/if}
+			</div>
 			<Eyebrow>{fmtDate(createdAt)}</Eyebrow>
 		</div>
 		<span class="event-budget-tag">Budget {peso(budget)}</span>

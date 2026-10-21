@@ -39,6 +39,18 @@
 	gap: 10px;
 }
 
+.event-card.is-settled {
+	border-color: color-mix(in oklab, var(--success) 38%, var(--border));
+	background: color-mix(in oklab, var(--success) 4%, var(--surface));
+}
+
+.event-card-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
 .event-card h3 {
 	font-size: var(--text-lg);
 	font-weight: 600;
@@ -483,18 +495,18 @@
 	margin-top: 10px;
 }
 
-.pay-act.is-settled {
+.act-row.is-settled {
 	background: color-mix(in oklab, var(--success) 4%, var(--surface));
 	border-color: color-mix(in oklab, var(--success) 30%, var(--border));
 }
 
-.pay-act.is-settled .act-name .act-title {
+.act-row.is-settled .act-name .act-title {
 	color: var(--muted);
 	text-decoration: line-through;
 	text-decoration-color: color-mix(in oklab, var(--muted) 55%, transparent);
 }
 
-.pay-act.is-settled .act-price {
+.act-row.is-settled .act-price {
 	color: var(--muted);
 }
 
