@@ -391,10 +391,10 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 |------|------|
 | Assets | Add `favicon.svg` (`+layout.svelte` currently imports missing file) |
 | Routes | `/` is already the real app. Optional: add `/kit` component gallery |
-| Meta | `theme-color`, `viewport-fit=cover` |
-| A11y | Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
+| Meta | [x] `theme-color`, `viewport-fit=cover` |
+| A11y | [x] Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
 | Persistence | Verify IndexedDB across refresh |
-| Responsive | 440px phone frame + desktop backdrop |
+| Responsive | [x] 440px phone frame + desktop backdrop |
 | PWA (optional) | manifest, service worker |
 | Tests | `settlement.ts` unit tests |
 | CI | `bun run check` + build |
@@ -418,7 +418,7 @@ Use when Phase 8 is near complete.
 - [x] List with budget progress + over-budget styling
 - [ ] Create event sheet
 - [x] Event detail: stats, add participants, balances
-- [x] Remove participant (only if they haven't paid) — UI gated; `store.removeParticipant()` does not enforce
+- [x] Remove participant (only if they haven't paid) — UI gated and `store.removeParticipant()` enforces
 - [x] Delete event (with confirm)
 
 ### Activities

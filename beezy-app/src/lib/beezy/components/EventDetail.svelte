@@ -31,7 +31,6 @@
 	interface Props {
 		event: EventDetailData;
 		onaddparticipant?: (name: string) => void;
-		onfinishparticipants?: () => void;
 		onremoveparticipant?: (id: string) => void;
 		onaddexpense?: () => void;
 		onsettleup?: () => void;
@@ -41,7 +40,6 @@
 	let {
 		event,
 		onaddparticipant,
-		onfinishparticipants,
 		onremoveparticipant,
 		onaddexpense,
 		onsettleup,
@@ -70,11 +68,6 @@
 		onaddparticipant?.(name);
 		paxName = '';
 	}
-
-	function handleFinish() {
-		if (paxName.trim()) handleAdd();
-		onfinishparticipants?.();
-	}
 </script>
 
 <StatGrid>
@@ -89,7 +82,7 @@
 
 {#if noParticipants}
 	<HintCard emoji="👋">
-		No participants yet. Add everyone below — the budget splits equally once you're done.
+		No participants yet. Add everyone below — the budget splits equally.
 	</HintCard>
 {/if}
 
@@ -98,11 +91,7 @@
 	right={event.participants.length ? `${event.participants.length} added` : undefined}
 />
 
-<AddParticipantRow
-	bind:value={paxName}
-	onadd={handleAdd}
-	onfinish={handleFinish}
-/>
+<AddParticipantRow bind:value={paxName} onadd={handleAdd} />
 
 {#if event.participants.length > 0}
 	<SectionLabel left="Participants & balances" />
