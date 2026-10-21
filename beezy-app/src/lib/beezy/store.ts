@@ -6,7 +6,6 @@ import {
 	type StoreName
 } from '$lib/beezy/db';
 import { uid } from '$lib/beezy/id';
-import { seedData } from '$lib/beezy/seed';
 import { canRemoveParticipant } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
@@ -34,19 +33,13 @@ export interface UpdateActivityInput {
 	paidById?: string;
 }
 
-/** Read the full persisted store. Seeds demo data on first run (empty database). */
+/** Read the full persisted store. An empty database stays empty (no auto-seed). */
 export async function loadStore(): Promise<Store> {
 	const [events, activities, meta] = await Promise.all([
 		readAll<Event>(STORES.events),
 		readAll<Activity>(STORES.activities),
 		readOne<MetaRecord>(STORES.meta, 'store')
 	]);
-
-	if (!meta && events.length === 0 && activities.length === 0) {
-		const seeded = seedData();
-		await saveStore(seeded);
-		return seeded;
-	}
 
 	return {
 		events: sortByCreatedAtDesc(events),
@@ -335,13 +328,6 @@ export async function unsettleActivity(id: string): Promise<Activity | null> {
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
-}
-
-/** Replace all data with demo seed (mockup `resetDemo`). */
-export async function resetDemo(): Promise<Store> {
-	const seeded = seedData();
-	await saveStore(seeded);
-	return seeded;
 }
 
 function sortByCreatedAtDesc<T extends { createdAt: string }>(items: T[]): T[] {
