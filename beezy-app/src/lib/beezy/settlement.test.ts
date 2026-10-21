@@ -6,8 +6,11 @@ import {
 	calcActivity,
 	calcEvent,
 	calcOutstanding,
+	calcPayerBundle,
 	canRemoveParticipant,
 	isEventSettled,
+	listPayerIds,
+	participantNameTaken,
 	payEventSummary,
 	tally
 } from '$lib/beezy/settlement';
@@ -128,6 +131,52 @@ describe('calcActivity', () => {
 		const result = calcActivity(act(1000, 'ghost'), ev);
 		expect(result.payer).toBeNull();
 		expect(result.others).toEqual(pax);
+	});
+});
+
+describe('calcPayerBundle / listPayerIds', () => {
+	test('sums every expense one person paid and splits the total equally', () => {
+		const acts = [act(8000, 'p1'), act(2000, 'p1'), act(3600, 'p2')];
+		const result = calcPayerBundle(acts, 'p1', ev);
+		expect(result.total).toBe(10000);
+		expect(result.n).toBe(4);
+		expect(result.share).toBe(2500);
+		expect(result.activities).toHaveLength(2);
+		expect(result.payer).toEqual(pax[0]);
+		expect(result.others.map((p) => p.id)).toEqual(['p2', 'p3', 'p4']);
+		expect(result.settled).toBe(false);
+	});
+
+	test('settled only when every expense they paid is settled', () => {
+		expect(calcPayerBundle([act(1, 'p1', true), act(1, 'p1', false)], 'p1', ev).settled).toBe(
+			false
+		);
+		expect(calcPayerBundle([act(1, 'p1', true), act(2, 'p1', true)], 'p1', ev).settled).toBe(true);
+	});
+
+	test('totals unsettled expenses only and still lists settled ones', () => {
+		const acts = [act(8000, 'p1', true), act(2000, 'p1', false), act(3600, 'p2')];
+		const result = calcPayerBundle(acts, 'p1', ev);
+		expect(result.activities).toHaveLength(2);
+		expect(result.total).toBe(2000);
+		expect(result.share).toBe(500);
+		expect(result.settled).toBe(false);
+	});
+
+	test('listPayerIds keeps first-seen order', () => {
+		expect(listPayerIds([act(1, 'p2'), act(1, 'p1'), act(1, 'p2'), act(1, 'p4')])).toEqual([
+			'p2',
+			'p1',
+			'p4'
+		]);
+	});
+});
+
+describe('participantNameTaken', () => {
+	test('matches the same name ignoring case and extra spaces', () => {
+		expect(participantNameTaken(pax, 'mika')).toBe(true);
+		expect(participantNameTaken(pax, '  Mika  ')).toBe(true);
+		expect(participantNameTaken(pax, 'Mika G')).toBe(false);
 	});
 });
 

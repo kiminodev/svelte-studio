@@ -51,7 +51,17 @@ export interface PayActivitySubState {
 	activityId: string;
 }
 
-export type SubState = DetailSubState | PayEventSubState | PayActivitySubState;
+/** Combined receipt for every expense one person covered on a trip. */
+export interface PayPersonSubState {
+	type: 'pay-person';
+	eventId: string;
+	paidById: string;
+}
+
+export type SubState = DetailSubState | PayEventSubState | PayActivitySubState | PayPersonSubState;
+
+/** How Payment groups receipts on a trip's settle screen. */
+export type PayReceiptMode = 'expense' | 'person';
 
 export interface NewEventSheetState {
 	type: 'new-event';
@@ -77,6 +87,8 @@ export interface ViewState {
 	menu: boolean;
 	/** When true, fully settled trips are hidden on the Events list. */
 	hideDone: boolean;
+	/** Payment settle screen: one receipt per expense, or one per person who paid. */
+	payReceiptMode: PayReceiptMode;
 }
 
 /** Minimal activity fields needed for settlement math. */
@@ -109,4 +121,10 @@ export interface ActivityBreakdown {
 	share: number;
 	payer: Participant | null;
 	others: Participant[];
+}
+
+/** Combined equal-split of every expense one person paid. */
+export interface PayerBundleResult<T extends ActivityLike = ActivityLike> extends ActivityBreakdown {
+	activities: T[];
+	settled: boolean;
 }

@@ -618,6 +618,13 @@
 	font-size: 16px;
 }
 
+.r-line.r-settled-item .k,
+.r-line.r-settled-item .v {
+	color: var(--muted);
+	text-decoration: line-through;
+	text-decoration-color: color-mix(in oklab, var(--muted) 55%, transparent);
+}
+
 .r-divider {
 	border: 0;
 	border-top: 1px dashed var(--border);
@@ -707,6 +714,42 @@
 .receipt-collect-note {
 	font-size: 11px;
 	margin-top: 6px;
+}
+
+.seg-wrap {
+	margin-bottom: 14px;
+}
+
+.seg {
+	display: flex;
+	padding: 3px;
+	background: var(--border-soft);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+}
+
+.seg button {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 8px 10px;
+	border-radius: 5px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--muted);
+}
+
+.seg button[aria-selected='true'] {
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--elev-raised);
+}
+
+.seg-hint {
+	margin-top: 8px;
+	font-size: 12px;
+	color: var(--muted);
+	line-height: 1.45;
 }
 
 .sheet-note {

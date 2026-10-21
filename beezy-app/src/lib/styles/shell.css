@@ -295,7 +295,11 @@
 	transition:
 		opacity var(--motion-base) var(--ease-standard),
 		transform var(--motion-base) var(--ease-standard);
-	white-space: nowrap;
+	max-width: calc(100% - 32px);
+	white-space: normal;
+	text-align: center;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
 }
 
 .toast.show {
