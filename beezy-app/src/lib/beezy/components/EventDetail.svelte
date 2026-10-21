@@ -5,6 +5,7 @@
 		calcEvent,
 		calcOutstanding,
 		isEventSettled,
+		participantNameTaken,
 		type ActivityLike,
 		type Participant
 	} from '$lib/beezy/settlement';
@@ -32,6 +33,7 @@
 	interface Props {
 		event: EventDetailData;
 		onaddparticipant?: (name: string) => void;
+		onduplicate?: (name: string) => void;
 		onremoveparticipant?: (id: string) => void;
 		onaddexpense?: () => void;
 		onsettleup?: () => void;
@@ -41,6 +43,7 @@
 	let {
 		event,
 		onaddparticipant,
+		onduplicate,
 		onremoveparticipant,
 		onaddexpense,
 		onsettleup,
@@ -78,6 +81,10 @@
 	function handleAdd() {
 		const name = paxName.trim();
 		if (!name) return;
+		if (participantNameTaken(event.participants, name)) {
+			onduplicate?.(name);
+			return;
+		}
 		onaddparticipant?.(name);
 		paxName = '';
 	}

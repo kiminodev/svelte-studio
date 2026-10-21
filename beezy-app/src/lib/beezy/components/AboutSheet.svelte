@@ -19,7 +19,10 @@
 		</div>
 	{/snippet}
 	{#snippet body()}
-		<div class="about-logo">🤗 Beezy</div>
+		<div class="about-logo">
+			<span class="brand-badge" aria-hidden="true"></span>
+			Beezy
+		</div>
 		<p class="muted-block about-tagline">Split trips, stay friends.</p>
 		<Divider />
 		<ul class="about-list">

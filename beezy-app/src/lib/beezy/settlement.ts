@@ -3,11 +3,19 @@ import type {
 	ActivityLike,
 	EventTallyResult,
 	Participant,
+	PayerBundleResult,
 	TallyResult
 } from '$lib/beezy/types';
 import { peso } from '$lib/beezy/format';
 
-export type { ActivityBreakdown, ActivityLike, EventTallyResult, Participant, TallyResult };
+export type {
+	ActivityBreakdown,
+	ActivityLike,
+	EventTallyResult,
+	Participant,
+	PayerBundleResult,
+	TallyResult
+};
 
 /** Event slice required by settlement helpers (participants only). */
 export interface SettlementEvent {
@@ -70,6 +78,46 @@ export function calcActivity(a: ActivityLike, ev: SettlementEvent): ActivityBrea
 	const payer = ev.participants.find((p) => p.id === a.paidById) ?? null;
 	const others = ev.participants.filter((p) => p.id !== a.paidById);
 	return { total, n, share, payer, others };
+}
+
+/**
+ * Combine every expense one person paid.
+ * Lists all of them; `total` / `share` use unsettled expenses only so already-paid
+ * items stay visible but do not inflate what friends still owe.
+ */
+export function calcPayerBundle<T extends ActivityLike>(
+	activities: T[],
+	paidById: string,
+	ev: SettlementEvent
+): PayerBundleResult<T> {
+	const items = activities.filter((a) => a.paidById === paidById);
+	const outstanding = items.filter((a) => !a.settled);
+	const total = outstanding.reduce((sum, a) => sum + Number(a.price || 0), 0);
+	const n = ev.participants.length;
+	const share = n > 0 ? total / n : 0;
+	const payer = ev.participants.find((p) => p.id === paidById) ?? null;
+	const others = ev.participants.filter((p) => p.id !== paidById);
+	const settled = items.length > 0 && outstanding.length === 0;
+	return { total, n, share, payer, others, activities: items, settled };
+}
+
+/** First-seen payer ids, in the order their expenses appear. */
+export function listPayerIds(activities: ActivityLike[]): string[] {
+	const seen = new Set<string>();
+	const ids: string[] = [];
+	for (const activity of activities) {
+		if (seen.has(activity.paidById)) continue;
+		seen.add(activity.paidById);
+		ids.push(activity.paidById);
+	}
+	return ids;
+}
+
+/** True when this trip already has someone with the same name (case-insensitive). */
+export function participantNameTaken(participants: Participant[], name: string): boolean {
+	const needle = name.trim().toLowerCase();
+	if (!needle) return false;
+	return participants.some((p) => p.name.trim().toLowerCase() === needle);
 }
 
 /**

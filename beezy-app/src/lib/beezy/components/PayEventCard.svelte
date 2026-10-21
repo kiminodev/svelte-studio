@@ -28,9 +28,11 @@
 	{onclick}
 	class={cn('pay-event-card', settled && 'is-settled', className)}
 >
-	<span class={cn('ri', settled && 'ri-done')}>
-		<Icon name={settled ? 'check' : 'receipt'} />
-	</span>
+	{#if settled}
+		<span class="ri ri-done">
+			<Icon name="check" />
+		</span>
+	{/if}
 	<span class="rt">
 		<h3>{title}</h3>
 		<p>{summary}</p>

@@ -295,7 +295,11 @@
 	transition:
 		opacity var(--motion-base) var(--ease-standard),
 		transform var(--motion-base) var(--ease-standard);
-	white-space: nowrap;
+	max-width: calc(100% - 32px);
+	white-space: normal;
+	text-align: center;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
 }
 
 .toast.show {
@@ -350,4 +354,48 @@
 	stroke: currentColor;
 	fill: none;
 	stroke-width: 1.7;
+}
+
+.menu-sep {
+	height: 1px;
+	background: var(--border);
+	margin: 4px 6px;
+}
+
+.theme-picker {
+	padding: 8px 11px 10px;
+}
+
+.theme-picker-label {
+	margin: 0 0 8px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.theme-swatches {
+	display: flex;
+	gap: 10px;
+}
+
+.theme-swatch {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border-radius: var(--radius-pill);
+	border: 1px solid color-mix(in oklab, var(--fg), transparent 86%);
+	cursor: pointer;
+}
+
+.theme-swatch[aria-checked='true'] {
+	box-shadow:
+		0 0 0 2px var(--surface),
+		0 0 0 4px var(--fg);
+}
+
+.theme-swatch:focus-visible {
+	outline: 2px solid var(--fg);
+	outline-offset: 3px;
 }

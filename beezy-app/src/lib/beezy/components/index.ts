@@ -1,4 +1,5 @@
 export { default as AboutSheet } from './AboutSheet.svelte';
+export { default as ThemePicker } from './ThemePicker.svelte';
 export { default as ActivityRow } from './ActivityRow.svelte';
 export { default as ActivitySheet } from './ActivitySheet.svelte';
 export { default as AddParticipantRow } from './AddParticipantRow.svelte';
@@ -8,7 +9,9 @@ export { default as NewEventSheet } from './NewEventSheet.svelte';
 export { default as ParticipantRow } from './ParticipantRow.svelte';
 export { default as PayEventCard } from './PayEventCard.svelte';
 export { default as PayProgress } from './PayProgress.svelte';
+export { default as PayerReceipt } from './PayerReceipt.svelte';
 export { default as Receipt } from './Receipt.svelte';
+export { default as ReceiptModeToggle } from './ReceiptModeToggle.svelte';
 export { default as ReceiptLine } from './ReceiptLine.svelte';
 export { default as ReceiptMember } from './ReceiptMember.svelte';
 export { type ReceiptActivity } from './Receipt.svelte';

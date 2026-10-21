@@ -538,10 +538,22 @@
 }
 
 .receipt-head .r-brand {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	font-family: var(--font-mono);
 	font-weight: 600;
 	font-size: var(--text-xl);
 	letter-spacing: 0.02em;
+}
+
+.receipt-head .r-brand-mark {
+	width: 14px;
+	height: 14px;
+	border-radius: 4px;
+	background: var(--accent);
+	flex: 0 0 auto;
 }
 
 .receipt-head .r-title {
@@ -616,6 +628,13 @@
 
 .r-line .r-big {
 	font-size: 16px;
+}
+
+.r-line.r-settled-item .k,
+.r-line.r-settled-item .v {
+	color: var(--muted);
+	text-decoration: line-through;
+	text-decoration-color: color-mix(in oklab, var(--muted) 55%, transparent);
 }
 
 .r-divider {
@@ -709,12 +728,51 @@
 	margin-top: 6px;
 }
 
+.seg-wrap {
+	margin-bottom: 14px;
+}
+
+.seg {
+	display: flex;
+	padding: 3px;
+	background: var(--border-soft);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+}
+
+.seg button {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 8px 10px;
+	border-radius: 5px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--muted);
+}
+
+.seg button[aria-selected='true'] {
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--elev-raised);
+}
+
+.seg-hint {
+	margin-top: 8px;
+	font-size: 12px;
+	color: var(--muted);
+	line-height: 1.45;
+}
+
 .sheet-note {
 	font-size: 12.5px;
 	margin-top: 8px;
 }
 
 .about-logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	font-family: var(--font-mono);
 	font-size: 28px;
 	font-weight: 600;

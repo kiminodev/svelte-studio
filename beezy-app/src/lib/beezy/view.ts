@@ -10,7 +10,14 @@ const VALID_TABS: ReadonlySet<TabId> = new Set(['events', 'activities', 'payment
 
 /** Default navigation state on first visit or when sessionStorage is unavailable. */
 export function defaultViewState(): ViewState {
-	return { tab: 'events', sub: null, sheet: null, menu: false, hideDone: false };
+	return {
+		tab: 'events',
+		sub: null,
+		sheet: null,
+		menu: false,
+		hideDone: false,
+		payReceiptMode: 'expense'
+	};
 }
 
 /**
@@ -61,6 +68,7 @@ function normalizeViewState(value: unknown): ViewState {
 		sub: v.sub ?? null,
 		sheet: v.sheet ?? null,
 		menu: Boolean(v.menu),
-		hideDone: Boolean(v.hideDone)
+		hideDone: Boolean(v.hideDone),
+		payReceiptMode: v.payReceiptMode === 'person' ? 'person' : 'expense'
 	};
 }

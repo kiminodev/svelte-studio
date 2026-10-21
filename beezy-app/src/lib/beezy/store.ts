@@ -6,7 +6,7 @@ import {
 	type StoreName
 } from '$lib/beezy/db';
 import { uid } from '$lib/beezy/id';
-import { canRemoveParticipant } from '$lib/beezy/settlement';
+import { canRemoveParticipant, participantNameTaken } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
 export interface CreateEventInput {
@@ -159,13 +159,18 @@ export async function deleteEvent(id: string): Promise<boolean> {
 	return deleted;
 }
 
-/** Append a participant to an event. Returns `null` when the event is missing or name is blank. */
+/**
+ * Append a participant to an event.
+ * Returns `null` when the event is missing, the name is blank, or the name is
+ * already used on this trip (nicknames keep Who-paid receipts unambiguous).
+ */
 export async function addParticipant(eventId: string, name: string): Promise<Participant | null> {
 	const trimmed = name.trim();
 	if (!trimmed) return null;
 
 	const event = await getEventById(eventId);
 	if (!event) return null;
+	if (participantNameTaken(event.participants, trimmed)) return null;
 
 	const participant: Participant = { id: uid(), name: trimmed };
 	const updated: Event = {
@@ -314,6 +319,41 @@ export async function settleActivity(id: string): Promise<Activity | null> {
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
+}
+
+/**
+ * Mark every expense this person paid on an event as settled or unpaid.
+ * @returns how many rows actually changed
+ */
+export async function setActivitiesSettledByPayer(
+	eventId: string,
+	paidById: string,
+	settled: boolean
+): Promise<number> {
+	const db = await openDb();
+	let count = 0;
+	const now = new Date().toISOString();
+
+	await new Promise<void>((resolve, reject) => {
+		const tx = db.transaction(STORES.activities, 'readwrite');
+		tx.oncomplete = () => resolve();
+		tx.onerror = () => reject(tx.error);
+
+		const store = tx.objectStore(STORES.activities);
+		const req = store.index('byEvent').getAll(eventId);
+		req.onsuccess = () => {
+			const rows = (req.result as Activity[]).map(migrateActivitySettled);
+			for (const activity of rows) {
+				if (activity.paidById !== paidById) continue;
+				if (Boolean(activity.settled) === settled) continue;
+				store.put({ ...activity, settled, updatedAt: now });
+				count += 1;
+			}
+		};
+		req.onerror = () => tx.abort();
+	});
+
+	return count;
 }
 
 /** Mark an activity unsettled and bump `updatedAt`. */

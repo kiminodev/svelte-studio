@@ -1,5 +1,10 @@
 import { fmtDateTime, peso } from '$lib/beezy/format';
-import { calcActivity, type ActivityLike, type SettlementEvent } from '$lib/beezy/settlement';
+import {
+	calcActivity,
+	calcPayerBundle,
+	type ActivityLike,
+	type SettlementEvent
+} from '$lib/beezy/settlement';
 
 /** Activity fields required to render a plain-text receipt summary. */
 export interface ActivitySummaryInput extends ActivityLike {
@@ -25,7 +30,7 @@ export function formatActivitySummary(
 	const payerName = ac.payer ? ac.payer.name : '—';
 	const lines: string[] = [];
 
-	lines.push('🤗 Beezy — ' + event.title);
+	lines.push('Beezy — ' + event.title);
 	lines.push(activity.name);
 	lines.push(fmtDateTime(activity.createdAt));
 	lines.push('----------------------------------');
@@ -86,6 +91,73 @@ export async function copyActivitySummary(
 	event: ActivitySummaryEvent
 ): Promise<boolean> {
 	return copyText(formatActivitySummary(activity, event));
+}
+
+/** Named expense fields required to list a Who-paid receipt. */
+export interface PayerSummaryActivity extends ActivitySummaryInput {
+	id?: string;
+}
+
+/**
+ * Plain-text combined receipt: every expense one person covered, split equally.
+ */
+export function formatPayerSummary(
+	activities: PayerSummaryActivity[],
+	paidById: string,
+	event: ActivitySummaryEvent
+): string {
+	const bundle = calcPayerBundle(activities, paidById, event);
+	const payerName = bundle.payer?.name ?? '—';
+	const openCount = bundle.activities.filter((a) => !a.settled).length;
+	const n = bundle.activities.length;
+	const countLabel = bundle.settled
+		? `${n === 1 ? '1 expense' : `${n} expenses`} · all settled`
+		: openCount < n
+			? `${openCount} of ${n} still open`
+			: n === 1
+				? '1 expense'
+				: `${n} expenses`;
+	const items = bundle.activities
+		.slice()
+		.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+	const lines: string[] = [];
+
+	lines.push('Beezy — ' + event.title);
+	lines.push(payerName + "'s expenses");
+	lines.push(countLabel);
+	lines.push('----------------------------------');
+	lines.push('Paid by:      ' + payerName);
+	lines.push('Split between ' + bundle.n + (bundle.n === 1 ? ' person' : ' people'));
+	for (const item of items) {
+		const mark = item.settled ? '  settled' : '';
+		lines.push('  ' + item.name.padEnd(14) + ' ' + peso(item.price) + mark);
+	}
+	lines.push((openCount < n ? 'Still open:   ' : 'Total:        ') + peso(bundle.total));
+	lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+
+	if (bundle.others.length) {
+		lines.push('----------------------------------');
+		lines.push(payerName + ' collects:');
+		for (const p of bundle.others) {
+			lines.push('  ' + p.name.padEnd(10) + ' ' + peso(bundle.share));
+		}
+		lines.push('  ' + 'TOTAL'.padEnd(10) + ' ' + peso(bundle.others.length * bundle.share));
+	}
+
+	lines.push('----------------------------------');
+	lines.push(bundle.settled ? '✔ Settled' : 'Tap Settle in Beezy when paid');
+	lines.push('Made with Beezy · saved on this phone');
+
+	return lines.join('\n');
+}
+
+/** Format a Who-paid receipt and copy it. */
+export async function copyPayerSummary(
+	activities: PayerSummaryActivity[],
+	paidById: string,
+	event: ActivitySummaryEvent
+): Promise<boolean> {
+	return copyText(formatPayerSummary(activities, paidById, event));
 }
 
 function fallbackCopy(text: string): boolean {
