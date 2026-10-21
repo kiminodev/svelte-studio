@@ -389,11 +389,11 @@ Payment tab → Pick event → Expense list + progress → Tap expense → Recei
 
 | Area | Task |
 |------|------|
-| Assets | Add `favicon.svg` (`+layout.svelte` currently imports missing file) |
+| Assets | [x] `favicon.svg` (yellow hug face, wired in `+layout.svelte`) |
 | Routes | `/` is already the real app. Optional: add `/kit` component gallery |
 | Meta | [x] `theme-color`, `viewport-fit=cover` |
 | A11y | [x] Sheet focus trap; `aria-label` on icon buttons; Enter on participant add |
-| Persistence | Verify IndexedDB across refresh |
+| Persistence [x]| Verify IndexedDB across refresh |
 | Responsive | [x] 440px phone frame + desktop backdrop |
 | PWA (optional) | manifest, service worker |
 | Tests | [x] `settlement.ts` unit tests (`bun test`) |
