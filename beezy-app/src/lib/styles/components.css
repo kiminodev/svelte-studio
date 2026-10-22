@@ -634,6 +634,11 @@
 	align-items: center;
 }
 
+.r-line.r-each-pays .k,
+.r-line.r-each-pays .v {
+	color: var(--success);
+}
+
 .r-line.r-total {
 	margin-top: 8px;
 	padding-top: 8px;

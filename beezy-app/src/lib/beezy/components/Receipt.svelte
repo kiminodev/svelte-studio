@@ -4,7 +4,6 @@
 	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
-	import ReceiptMember from './ReceiptMember.svelte';
 
 	export interface ReceiptActivity extends ActivityLike {
 		name: string;
@@ -73,19 +72,15 @@
 				label="Split between"
 				text={`${breakdown.n} ${breakdown.n === 1 ? 'person' : 'people'}`}
 			/>
-			<ReceiptLine label="Each pays" text={breakdown.n ? peso(breakdown.share) : '—'} />
 
 			{#if breakdown.others.length > 0}
 				<hr class="r-divider" />
-				<div class="r-section-title">{payerName} collects</div>
-				{#each breakdown.others as member (member.id)}
-					<ReceiptMember
-						name={member.name}
-						owesTo={payerName}
-						amount={breakdown.share}
-					/>
-				{/each}
-				<ReceiptLine label="Total to collect" text={peso(collectTotal)} total />
+				<ReceiptLine
+					class="r-each-pays"
+					label="Each pays"
+					text={breakdown.n ? peso(breakdown.share) : '—'}
+				/>
+				<ReceiptLine label="{payerName} collects" text={peso(collectTotal)} big />
 				<p class="muted-block receipt-collect-note">
 					{payerName}'s own share is {peso(breakdown.share)} — already covered, since they paid
 					the full {peso(breakdown.total)}.

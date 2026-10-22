@@ -39,15 +39,11 @@ export function formatActivitySummary(
 	if (ac.payer?.gcash) lines.push(gcashReceiptLabel(payerName) + ': ' + ac.payer.gcash);
 	lines.push('Total:        ' + peso(ac.total));
 	lines.push('Split between ' + ac.n + (ac.n === 1 ? ' person' : ' people'));
-	lines.push('Each pays:    ' + (ac.n ? peso(ac.share) : '—'));
 
 	if (ac.others.length) {
 		lines.push('----------------------------------');
-		lines.push(payerName + ' collects:');
-		for (const p of ac.others) {
-			lines.push('  ' + p.name.padEnd(10) + ' ' + peso(ac.share));
-		}
-		lines.push('  ' + 'TOTAL'.padEnd(10) + ' ' + peso(ac.others.length * ac.share));
+		lines.push('Each pays:    ' + (ac.n ? peso(ac.share) : '—'));
+		lines.push(payerName + ' collects: ' + peso(ac.others.length * ac.share));
 	}
 
 	lines.push('----------------------------------');
@@ -133,16 +129,12 @@ export function formatPayerSummary(
 		const mark = item.settled ? '  settled' : '';
 		lines.push('  ' + item.name.padEnd(14) + ' ' + peso(item.price) + mark);
 	}
-	lines.push('Total:        ' + peso(bundle.total));
-	lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+	if (n > 1) lines.push('Total:        ' + peso(bundle.total));
 
 	if (bundle.others.length) {
 		lines.push('----------------------------------');
-		lines.push(payerName + ' collects:');
-		for (const p of bundle.others) {
-			lines.push('  ' + p.name.padEnd(10) + ' ' + peso(bundle.share));
-		}
-		lines.push('  ' + 'TOTAL'.padEnd(10) + ' ' + peso(bundle.others.length * bundle.share));
+		lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+		lines.push(payerName + ' collects: ' + peso(bundle.others.length * bundle.share));
 	}
 
 	lines.push('----------------------------------');

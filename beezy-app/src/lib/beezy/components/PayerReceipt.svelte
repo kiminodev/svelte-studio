@@ -5,7 +5,6 @@
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
-	import ReceiptMember from './ReceiptMember.svelte';
 
 	interface Props {
 		eventTitle: string;
@@ -85,12 +84,9 @@
 					text={peso(item.price)}
 				/>
 			{/each}
-			<ReceiptLine label="Total expense" text={peso(bundle.total)} big />
-			<ReceiptLine
-				class="r-each-pays"
-				label="Each pays"
-				text={bundle.n ? peso(bundle.share) : '—'}
-			/>
+			{#if items.length > 1}
+				<ReceiptLine label="Total expense" text={peso(bundle.total)} big />
+			{/if}
 
 			{#if bundle.settled}
 				<hr class="r-divider" />
@@ -99,11 +95,12 @@
 				</p>
 			{:else if bundle.others.length > 0}
 				<hr class="r-divider" />
-				<div class="r-section-title">{payerName} collects</div>
-				{#each bundle.others as member (member.id)}
-					<ReceiptMember name={member.name} owesTo={payerName} amount={bundle.share} />
-				{/each}
-				<ReceiptLine label="Total to collect" text={peso(collectTotal)} total />
+				<ReceiptLine
+					class="r-each-pays"
+					label="Each pays"
+					text={bundle.n ? peso(bundle.share) : '—'}
+				/>
+				<ReceiptLine label="{payerName} collects" text={peso(collectTotal)} big />
 				<p class="muted-block receipt-collect-note">
 					{payerName}'s own share is {peso(bundle.share)} — already covered, since they paid
 					the full {peso(bundle.total)}.
@@ -127,9 +124,4 @@
 	.receipt-payer-name {
 		margin-left: 6px;
 	}
-
-	.receipt :global(.r-each-pays .k),
-	.receipt :global(.r-each-pays .v) {
-		color: var(--success);
-	}
-</style>
+}</style>
