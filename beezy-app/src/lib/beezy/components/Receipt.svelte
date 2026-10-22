@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { peso, receiptDateLabel } from '$lib/beezy/format';
 	import { gcashReceiptLabel } from '$lib/beezy/gcash';
-	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
+	import {
+		calcActivity,
+		splitBetweenLabel,
+		type ActivityLike,
+		type Participant
+	} from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
 
@@ -69,8 +74,9 @@
 			{/if}
 			<ReceiptLine label="Total expense" text={peso(breakdown.total)} big />
 			<ReceiptLine
+				class="r-split"
 				label="Split between"
-				text={`${breakdown.n} ${breakdown.n === 1 ? 'person' : 'people'}`}
+				text={splitBetweenLabel(breakdown)}
 			/>
 
 			{#if breakdown.others.length > 0}
@@ -88,7 +94,11 @@
 			{:else}
 				<hr class="r-divider" />
 				<p class="muted-block" style="font-size: 12px">
-					Solo expense — only {payerName} is in this event, so there's nothing to split.
+					{#if breakdown.splitEveryone}
+						Solo expense — only {payerName} is in this event, so there's nothing to split.
+					{:else}
+						Only {payerName} is on this split, so there's nothing to collect.
+					{/if}
 				</p>
 			{/if}
 		</div>

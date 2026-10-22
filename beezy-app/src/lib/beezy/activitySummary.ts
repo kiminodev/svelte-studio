@@ -3,6 +3,7 @@ import { gcashReceiptLabel } from '$lib/beezy/gcash';
 import {
 	calcActivity,
 	calcPayerBundle,
+	splitBetweenLabel,
 	type ActivityLike,
 	type SettlementEvent
 } from '$lib/beezy/settlement';
@@ -38,7 +39,7 @@ export function formatActivitySummary(
 	lines.push('Paid by:      ' + payerName);
 	if (ac.payer?.gcash) lines.push(gcashReceiptLabel(payerName) + ': ' + ac.payer.gcash);
 	lines.push('Total:        ' + peso(ac.total));
-	lines.push('Split between ' + ac.n + (ac.n === 1 ? ' person' : ' people'));
+	lines.push('Split between: ' + splitBetweenLabel(ac));
 
 	if (ac.others.length) {
 		lines.push('----------------------------------');
@@ -124,7 +125,7 @@ export function formatPayerSummary(
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);
 	if (bundle.payer?.gcash) lines.push(gcashReceiptLabel(payerName) + ': ' + bundle.payer.gcash);
-	lines.push('Split between ' + bundle.n + (bundle.n === 1 ? ' person' : ' people'));
+	lines.push('Split between: ' + splitBetweenLabel(bundle));
 	for (const item of items) {
 		const mark = item.settled ? '  settled' : '';
 		lines.push('  ' + item.name.padEnd(14) + ' ' + peso(item.price) + mark);
@@ -133,8 +134,10 @@ export function formatPayerSummary(
 
 	if (bundle.others.length) {
 		lines.push('----------------------------------');
-		lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
-		lines.push(payerName + ' collects: ' + peso(bundle.others.length * bundle.share));
+		if (!bundle.splitMixed) {
+			lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+		}
+		lines.push(payerName + ' collects: ' + peso(bundle.collectTotal));
 	}
 
 	lines.push('----------------------------------');

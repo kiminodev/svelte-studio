@@ -8,7 +8,11 @@ import {
 import { sortNewestFirst } from '$lib/beezy/format';
 import { uid } from '$lib/beezy/id';
 import { parseGcash } from '$lib/beezy/gcash';
-import { canRemoveParticipant, participantNameTaken } from '$lib/beezy/settlement';
+import {
+	canRemoveParticipant,
+	normalizeSplitWithIds,
+	participantNameTaken
+} from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
 export interface CreateEventInput {
@@ -26,6 +30,8 @@ export interface CreateActivityInput {
 	price: number;
 	eventId: string;
 	paidById: string;
+	/** Who shares this expense. Empty / omitted = everyone on the event. */
+	splitWithIds?: string[];
 }
 
 export interface UpdateActivityInput {
@@ -33,6 +39,8 @@ export interface UpdateActivityInput {
 	price?: number;
 	eventId?: string;
 	paidById?: string;
+	/** Who shares this expense. Empty / omitted = everyone on the event. */
+	splitWithIds?: string[];
 }
 
 /** Read the full persisted store. An empty database stays empty (no auto-seed). */
@@ -252,6 +260,11 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
 	if (!payer) return null;
 
 	const now = new Date().toISOString();
+	const splitWithIds = normalizeSplitWithIds(
+		input.splitWithIds,
+		event.participants,
+		input.paidById
+	);
 	const activity: Activity = {
 		id: uid(),
 		name: input.name.trim(),
@@ -261,7 +274,8 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
 		paidByName: payer.name,
 		createdAt: now,
 		updatedAt: now,
-		settled: false
+		settled: false,
+		...(splitWithIds ? { splitWithIds } : {})
 	};
 	await writeOne(STORES.activities, activity);
 	return activity;
@@ -286,14 +300,23 @@ export async function updateActivity(
 	const payer = event.participants.find((p) => p.id === paidById);
 	if (!payer) return null;
 
+	const migrated = migrateActivitySettled(existing);
+	const { splitWithIds: previousSplit, ...rest } = migrated;
+	const nextSplit = normalizeSplitWithIds(
+		'splitWithIds' in input ? input.splitWithIds : previousSplit,
+		event.participants,
+		paidById
+	);
+
 	const updated: Activity = {
-		...migrateActivitySettled(existing),
+		...rest,
 		name: input.name !== undefined ? input.name.trim() : existing.name,
 		price: input.price ?? existing.price,
 		eventId,
 		paidById,
 		paidByName: payer.name,
-		updatedAt: new Date().toISOString()
+		updatedAt: new Date().toISOString(),
+		...(nextSplit ? { splitWithIds: nextSplit } : {})
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
@@ -334,6 +357,41 @@ export async function settleActivity(id: string): Promise<Activity | null> {
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
+}
+
+/**
+ * Mark the given activity ids settled or unpaid.
+ * @returns how many rows actually changed
+ */
+export async function setActivitiesSettled(ids: string[], settled: boolean): Promise<number> {
+	const unique = [...new Set(ids.filter(Boolean))];
+	if (!unique.length) return 0;
+
+	const db = await openDb();
+	let count = 0;
+	const now = new Date().toISOString();
+
+	await new Promise<void>((resolve, reject) => {
+		const tx = db.transaction(STORES.activities, 'readwrite');
+		tx.oncomplete = () => resolve();
+		tx.onerror = () => reject(tx.error);
+
+		const store = tx.objectStore(STORES.activities);
+		for (const id of unique) {
+			const req = store.get(id);
+			req.onsuccess = () => {
+				const existing = req.result as Activity | undefined;
+				if (!existing) return;
+				const current = migrateActivitySettled(existing);
+				if (Boolean(current.settled) === settled) return;
+				store.put({ ...current, settled, updatedAt: now });
+				count += 1;
+			};
+			req.onerror = () => tx.abort();
+		}
+	});
+
+	return count;
 }
 
 /**

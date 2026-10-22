@@ -3,10 +3,11 @@
 	import {
 		calcActivity,
 		calcEvent,
-		calcPayerBundle,
 		isEventSettled,
 		listPayerIds,
-		payEventSummary
+		listPayerSplitBundles,
+		payEventSummary,
+		splitBetweenLabel
 	} from '$lib/beezy/settlement';
 	import { fmtDate, peso, sortNewestFirst } from '$lib/beezy/format';
 	import {
@@ -17,7 +18,7 @@
 		deleteEvent,
 		loadStore,
 		removeParticipant,
-		setActivitiesSettledByPayer,
+		setActivitiesSettled,
 		settleActivity,
 		unsettleActivity,
 		updateActivity,
@@ -53,6 +54,7 @@
 		ReceiptModeToggle,
 		Screen,
 		ScreenHead,
+		SectionLabel,
 		Tab,
 		TabBar,
 		ThemePicker,
@@ -159,22 +161,25 @@
 		return sub.paidById;
 	});
 
-	const payPersonBundle = $derived.by(() => {
-		if (!payPersonId || !payEvent) return null;
-		const bundle = calcPayerBundle(payEvent.activities, payPersonId, payEvent);
-		if (bundle.activities.length === 0) return null;
-		return bundle;
+	const payPersonBundles = $derived.by(() => {
+		if (!payPersonId || !payEvent) return [];
+		return listPayerSplitBundles(payEvent.activities, payPersonId, payEvent);
 	});
 
 	const payPayers = $derived.by(() => {
 		if (!payEvent) return [];
 		return listPayerIds(payEvent.activities).map((paidById) => {
-			const bundle = calcPayerBundle(payEvent.activities, paidById, payEvent);
+			const bundles = listPayerSplitBundles(payEvent.activities, paidById, payEvent);
+			const first = bundles[0]?.bundle;
 			const sample = payEvent.activities.find((a) => a.paidById === paidById);
+			const activities = bundles.flatMap((group) => group.bundle.activities);
 			return {
 				paidById,
-				name: bundle.payer?.name ?? sample?.paidByName ?? '—',
-				bundle
+				name: first?.payer?.name ?? sample?.paidByName ?? '—',
+				bundles,
+				total: bundles.reduce((sum, group) => sum + group.bundle.total, 0),
+				settled: bundles.length > 0 && bundles.every((group) => group.bundle.settled),
+				activities
 			};
 		});
 	});
@@ -184,7 +189,7 @@
 	const appBar = $derived.by(() => {
 		if (
 			(view.sub?.type === 'pay-activity' && payActivity && payEvent) ||
-			(view.sub?.type === 'pay-person' && payPersonBundle && payEvent)
+			(view.sub?.type === 'pay-person' && payPersonBundles.length > 0 && payEvent)
 		) {
 			return {
 				title: payEvent.title,
@@ -496,18 +501,23 @@
 	}
 
 	async function handleCopyReceipt() {
-		if (!payEvent) return;
-		const ok = payPersonId
-			? await copyPayerSummary(payEvent.activities, payPersonId, payEvent)
-			: payActivity
-				? await copyActivitySummary(payActivity, payEvent)
-				: false;
+		if (!payEvent || !payActivity) return;
+		const ok = await copyActivitySummary(payActivity, payEvent);
 		showToast(ok ? 'Copied — paste it in the chat' : "Couldn't copy — screenshot the receipt instead");
 	}
 
-	async function handleTogglePayerSettled(settled: boolean) {
+	async function handleCopyPayerReceipt(receiptActivities: Activity[]) {
 		if (!payPersonId || !payEvent) return;
-		const changed = await setActivitiesSettledByPayer(payEvent.id, payPersonId, settled);
+		const ok = await copyPayerSummary(receiptActivities, payPersonId, payEvent);
+		showToast(ok ? 'Copied — paste it in the chat' : "Couldn't copy — screenshot the receipt instead");
+	}
+
+	async function handleTogglePayerSettled(receiptActivities: Activity[], settled: boolean) {
+		if (!payEvent) return;
+		const changed = await setActivitiesSettled(
+			receiptActivities.map((activity) => activity.id),
+			settled
+		);
 		if (!changed && settled) return;
 		await refreshFromStore();
 		if (!settled) {
@@ -655,28 +665,52 @@
 					Copy receipt text
 				</Button>
 			</div>
-		{:else if payPersonBundle && payPersonId && payEvent && view.sub?.type === 'pay-person'}
-			<PayerReceipt
-				eventTitle={payEvent.title}
-				paidById={payPersonId}
-				activities={payEvent.activities}
-				participants={payEvent.participants}
-			/>
-			<div class="receipt-actions">
-				{#if payPersonBundle.settled}
-					<Button variant="secondary" block onclick={() => handleTogglePayerSettled(false)}>
-						Mark unpaid
-					</Button>
-				{:else}
-					<Button variant="yellow" block onclick={() => handleTogglePayerSettled(true)}>
-						<Icon name="check" />
-						Settle these expenses
-					</Button>
-				{/if}
-				<Button variant="ghost" block onclick={handleCopyReceipt}>
-					<Icon name="copy" />
-					Copy receipt text
-				</Button>
+		{:else if payPersonBundles.length > 0 && payPersonId && payEvent && view.sub?.type === 'pay-person'}
+			<div class="payer-receipts">
+				{#each payPersonBundles as group (group.key)}
+					{@const bundle = group.bundle}
+					<div class="payer-receipt-block">
+						{#if payPersonBundles.length > 1}
+							<SectionLabel left={splitBetweenLabel(bundle)} />
+						{/if}
+						<PayerReceipt
+							eventTitle={payEvent.title}
+							paidById={payPersonId}
+							activities={bundle.activities}
+							participants={payEvent.participants}
+						/>
+						<div class="receipt-actions">
+							{#if bundle.settled}
+								<Button
+									variant="secondary"
+									block
+									onclick={() => handleTogglePayerSettled(bundle.activities, false)}
+								>
+									Mark unpaid
+								</Button>
+							{:else}
+								<Button
+									variant="yellow"
+									block
+									onclick={() => handleTogglePayerSettled(bundle.activities, true)}
+								>
+									<Icon name="check" />
+									{bundle.activities.length === 1
+										? 'Settle this expense'
+										: 'Settle these expenses'}
+								</Button>
+							{/if}
+							<Button
+								variant="ghost"
+								block
+								onclick={() => handleCopyPayerReceipt(bundle.activities)}
+							>
+								<Icon name="copy" />
+								Copy receipt text
+							</Button>
+						</div>
+					</div>
+				{/each}
 			</div>
 		{:else if payEvent && view.sub?.type === 'pay-event'}
 			{@const totals = calcEvent(payEvent, payEvent.activities)}
@@ -718,28 +752,39 @@
 				</EmptyState>
 			{:else if view.payReceiptMode === 'person'}
 				{#each payPayers as payer (payer.paidById)}
-					{@const bundle = payer.bundle}
-					{@const each = bundle.n > 0 ? peso(bundle.share) : '—'}
-					{@const totalCount = bundle.activities.length}
-					{@const openCount = bundle.activities.filter((a) => !a.settled).length}
+					{@const receiptCount = payer.bundles.length}
+					{@const only = payer.bundles[0]?.bundle}
+					{@const each = only && only.n > 0 ? peso(only.share) : '—'}
+					{@const totalCount = payer.activities.length}
+					{@const openCount = payer.activities.filter((a) => !a.settled).length}
 					{@const countLabel =
-						totalCount === 1 ? '1 expense' : `${totalCount} expenses`}
+						receiptCount > 1
+							? `${receiptCount} receipts`
+							: totalCount === 1
+								? '1 expense'
+								: `${totalCount} expenses`}
 					<ActivityRow
 						name={payer.name}
-						price={bundle.total}
+						price={payer.total}
 						paidByName={payer.name}
-						createdAt={bundle.activities[0]?.createdAt ?? ''}
+						createdAt={payer.activities[0]?.createdAt ?? ''}
 						variant="payment"
 						showPaidBy={false}
-						settled={bundle.settled}
-						oweLabel={bundle.others.length
-							? `${bundle.others.length} owe ${each} each`
-							: 'solo expense'}
-						statusLabel={bundle.settled
-							? `${countLabel} · settled`
+						settled={payer.settled}
+						oweLabel={receiptCount > 1
+							? countLabel
+							: only?.others.length
+								? `${only.others.length} owe ${each} each`
+								: 'solo expense'}
+						statusLabel={payer.settled
+							? receiptCount > 1
+								? 'all settled'
+								: `${countLabel} · settled`
 							: openCount < totalCount
 								? `${openCount} of ${totalCount} still open · tap to settle →`
-								: `${countLabel} · tap to settle →`}
+								: receiptCount > 1
+									? 'tap to settle →'
+									: `${countLabel} · tap to settle →`}
 						onclick={() => openPayPerson(payEvent.id, payer.paidById)}
 					/>
 				{/each}

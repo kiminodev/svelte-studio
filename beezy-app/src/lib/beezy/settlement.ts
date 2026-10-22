@@ -23,11 +23,79 @@ export interface SettlementEvent {
 }
 
 /**
+ * People this expense is split among.
+ *
+ * Missing or empty `splitWithIds` means everyone on the event. Ids that no
+ * longer belong to the event are dropped. The payer is always included when
+ * they are still a participant. If nothing valid remains, fall back to everyone
+ * so older receipts still add up.
+ */
+export function resolveSplitters(a: ActivityLike, participants: Participant[]): Participant[] {
+	const stored = a.splitWithIds;
+	if (!stored?.length) return participants;
+
+	const wanted = new Set(stored);
+	if (a.paidById) wanted.add(a.paidById);
+
+	const chosen = participants.filter((p) => wanted.has(p.id));
+	return chosen.length ? chosen : participants;
+}
+
+/** True when this expense is split with every current participant. */
+export function isSplitEveryone(a: ActivityLike, participants: Participant[]): boolean {
+	if (!a.splitWithIds?.length) return true;
+	return resolveSplitters(a, participants).length === participants.length;
+}
+
+/**
+ * Persist split ids only when they are a proper subset of the event.
+ * Always includes the payer. Missing, empty, or "everyone" → `undefined`.
+ */
+export function normalizeSplitWithIds(
+	ids: string[] | undefined,
+	participants: Participant[],
+	paidById: string
+): string[] | undefined {
+	if (!ids?.length || !participants.length) return undefined;
+
+	const allowed = new Set(participants.map((p) => p.id));
+	const unique = new Set(ids.filter((id) => allowed.has(id)));
+	if (allowed.has(paidById)) unique.add(paidById);
+	if (unique.size === 0 || unique.size >= participants.length) return undefined;
+
+	return participants.filter((p) => unique.has(p.id)).map((p) => p.id);
+}
+
+/** Stable key for comparing two expenses' split groups. */
+export function splitKey(a: ActivityLike, participants: Participant[]): string {
+	return resolveSplitters(a, participants)
+		.map((p) => p.id)
+		.sort()
+		.join(',');
+}
+
+/**
+ * Receipt / copy label for who an expense (or Who-paid bundle) is split with.
+ */
+export function splitBetweenLabel(
+	breakdown: Pick<ActivityBreakdown, 'n' | 'splitEveryone' | 'splitMixed' | 'splitters'>
+): string {
+	if (breakdown.splitMixed) return 'Varies by expense';
+	if (breakdown.splitEveryone) {
+		return breakdown.n === 1 ? 'Everyone · 1 person' : `Everyone · ${breakdown.n} people`;
+	}
+	const names = breakdown.splitters.map((p) => p.name).filter(Boolean);
+	return names.length ? names.join(', ') : '—';
+}
+
+/**
  * Equal-split tally for a list of activities against an event's participants.
  *
  * Rules:
- * - share = total price ÷ participant count (0 when n = 0)
- * - balance = amount paid − share (positive = is owed money)
+ * - each expense is split equally among its split group (everyone by default)
+ * - `result.share` is still total ÷ participant count (trip-wide average)
+ * - each row's `share` is that person's sum of per-expense shares
+ * - balance = amount paid − that person's share (positive = is owed money)
  *
  * Payments from unknown payer IDs are ignored.
  */
@@ -36,17 +104,27 @@ export function tally(acts: ActivityLike[], participants: Participant[]): TallyR
 	const n = participants.length;
 	const share = n > 0 ? total / n : 0;
 	const paidBy: Record<string, number> = {};
+	const shares: Record<string, number> = {};
 	for (const p of participants) {
 		paidBy[p.id] = 0;
+		shares[p.id] = 0;
 	}
 	for (const a of acts) {
+		const price = Number(a.price || 0);
 		if (paidBy[a.paidById] != null) {
-			paidBy[a.paidById] += Number(a.price || 0);
+			paidBy[a.paidById] += price;
+		}
+		const splitters = resolveSplitters(a, participants);
+		const count = splitters.length;
+		const piece = count > 0 ? price / count : 0;
+		for (const p of splitters) {
+			shares[p.id] += piece;
 		}
 	}
 	const rows = participants.map((p) => {
 		const paid = paidBy[p.id] ?? 0;
-		return { id: p.id, name: p.name, paid, share, balance: paid - share };
+		const personShare = shares[p.id] ?? 0;
+		return { id: p.id, name: p.name, paid, share: personShare, balance: paid - personShare };
 	});
 	return { total, n, share, rows };
 }
@@ -69,21 +147,58 @@ export function calcOutstanding(ev: SettlementEvent, activities: ActivityLike[])
 }
 
 /**
- * Per-expense breakdown: payer, equal share, and members who owe the payer.
+ * Per-expense breakdown: payer, equal share among the split group, and members
+ * who owe the payer.
  */
 export function calcActivity(a: ActivityLike, ev: SettlementEvent): ActivityBreakdown {
 	const total = Number(a.price || 0);
-	const n = ev.participants.length;
+	const splitters = resolveSplitters(a, ev.participants);
+	const n = splitters.length;
 	const share = n > 0 ? total / n : 0;
 	const payer = ev.participants.find((p) => p.id === a.paidById) ?? null;
-	const others = ev.participants.filter((p) => p.id !== a.paidById);
-	return { total, n, share, payer, others };
+	const others = splitters.filter((p) => p.id !== a.paidById);
+	return {
+		total,
+		n,
+		share,
+		payer,
+		others,
+		splitters,
+		splitEveryone: isSplitEveryone(a, ev.participants),
+		collectTotal: others.length * share
+	};
+}
+
+function emptyBundle<T extends ActivityLike>(
+	items: T[],
+	paidById: string,
+	ev: SettlementEvent,
+	settled: boolean
+): PayerBundleResult<T> {
+	const payer = ev.participants.find((p) => p.id === paidById) ?? null;
+	const others = ev.participants.filter((p) => p.id !== paidById);
+	return {
+		total: 0,
+		n: ev.participants.length,
+		share: 0,
+		payer,
+		others,
+		splitters: ev.participants,
+		splitEveryone: true,
+		collectTotal: 0,
+		activities: items,
+		settled
+	};
 }
 
 /**
  * Combine every expense one person paid.
  * Lists all of them; `total` / `share` use unsettled expenses only so already-paid
  * items stay visible but do not inflate what friends still owe.
+ *
+ * When outstanding expenses use the same split group, `share` is the combined
+ * equal split. When they differ, `splitMixed` is set and `collectTotal` is the
+ * sum of each expense's remaining share instead.
  */
 export function calcPayerBundle<T extends ActivityLike>(
 	activities: T[],
@@ -93,12 +208,99 @@ export function calcPayerBundle<T extends ActivityLike>(
 	const items = activities.filter((a) => a.paidById === paidById);
 	const outstanding = items.filter((a) => !a.settled);
 	const total = outstanding.reduce((sum, a) => sum + Number(a.price || 0), 0);
-	const n = ev.participants.length;
-	const share = n > 0 ? total / n : 0;
 	const payer = ev.participants.find((p) => p.id === paidById) ?? null;
-	const others = ev.participants.filter((p) => p.id !== paidById);
 	const settled = items.length > 0 && outstanding.length === 0;
-	return { total, n, share, payer, others, activities: items, settled };
+	const source = outstanding.length ? outstanding : items;
+
+	if (!source.length) {
+		return emptyBundle(items, paidById, ev, settled);
+	}
+
+	const keys = source.map((a) => splitKey(a, ev.participants));
+	const splitMixed = keys.some((k) => k !== keys[0]);
+
+	if (splitMixed) {
+		const breakdowns = outstanding.map((a) => calcActivity(a, ev));
+		const collectTotal = breakdowns.reduce((sum, b) => sum + b.collectTotal, 0);
+		const otherIds = new Set(breakdowns.flatMap((b) => b.others.map((p) => p.id)));
+		const splitterIds = new Set(breakdowns.flatMap((b) => b.splitters.map((p) => p.id)));
+		return {
+			total,
+			n: 0,
+			share: 0,
+			payer,
+			others: ev.participants.filter((p) => otherIds.has(p.id)),
+			splitters: ev.participants.filter((p) => splitterIds.has(p.id)),
+			splitEveryone: false,
+			splitMixed: true,
+			collectTotal,
+			activities: items,
+			settled
+		};
+	}
+
+	const first = calcActivity(source[0], ev);
+	const n = first.n;
+	const share = n > 0 ? total / n : 0;
+	return {
+		total,
+		n,
+		share,
+		payer,
+		others: first.others,
+		splitters: first.splitters,
+		splitEveryone: first.splitEveryone,
+		collectTotal: first.others.length * share,
+		activities: items,
+		settled
+	};
+}
+
+/** One Who-paid receipt: expenses that share the same split group. */
+export interface PayerSplitBundle<T extends ActivityLike = ActivityLike> {
+	key: string;
+	bundle: PayerBundleResult<T>;
+}
+
+/**
+ * Who-paid receipts for one person.
+ *
+ * Everyone-split expenses share a single receipt. Each unique friend-split
+ * set (same people on the split) gets its own receipt so mixed trips can
+ * settle and share one group at a time.
+ *
+ * Everyone-split comes first; other groups follow first-seen expense order.
+ */
+export function listPayerSplitBundles<T extends ActivityLike>(
+	activities: T[],
+	paidById: string,
+	ev: SettlementEvent
+): PayerSplitBundle<T>[] {
+	const items = activities.filter((a) => a.paidById === paidById);
+	if (!items.length) return [];
+
+	const groups = new Map<string, T[]>();
+	const order: string[] = [];
+	let everyoneKey: string | null = null;
+
+	for (const item of items) {
+		const key = splitKey(item, ev.participants);
+		if (!groups.has(key)) {
+			groups.set(key, []);
+			order.push(key);
+			if (isSplitEveryone(item, ev.participants)) everyoneKey = key;
+		}
+		groups.get(key)?.push(item);
+	}
+
+	const sortedKeys = everyoneKey
+		? [everyoneKey, ...order.filter((key) => key !== everyoneKey)]
+		: order;
+
+	return sortedKeys.map((key) => ({
+		key,
+		bundle: calcPayerBundle(groups.get(key) ?? [], paidById, ev)
+	}));
 }
 
 /** First-seen payer ids, in the order their expenses appear. */
