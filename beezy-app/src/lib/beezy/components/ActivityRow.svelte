@@ -41,9 +41,9 @@
 		onclick
 	}: Props = $props();
 
-	const edited = $derived(updatedAt && updatedAt !== createdAt);
+	const edited = $derived(Boolean(updatedAt && updatedAt !== createdAt));
 	const dateLabel = $derived(
-		fmtDate(createdAt) + (edited && updatedAt ? ` · edited ${fmtDate(updatedAt)}` : '')
+		edited && updatedAt ? `edited ${fmtDate(updatedAt)}` : fmtDate(createdAt)
 	);
 	const footerLabel = $derived(statusLabel ?? dateLabel);
 </script>
@@ -72,5 +72,7 @@
 			<Chip variant="event">{eventTitle}</Chip>
 		{/if}
 	</span>
-	<span class="act-edited">{footerLabel}</span>
+	{#if footerLabel}
+		<span class="act-edited">{footerLabel}</span>
+	{/if}
 </button>

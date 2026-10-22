@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { normalizeGcashInput, parseGcash } from '$lib/beezy/gcash';
+import { gcashReceiptLabel, normalizeGcashInput, parseGcash } from '$lib/beezy/gcash';
 
 describe('normalizeGcashInput', () => {
 	test('keeps digits and drops spaces, dashes, and letters', () => {
@@ -27,5 +27,11 @@ describe('parseGcash', () => {
 		expect(parseGcash('0917123456')).toEqual({ ok: false });
 		expect(parseGcash('091712345678')).toEqual({ ok: false });
 		expect(parseGcash('abc')).toEqual({ ok: false });
+	});
+});
+
+describe('gcashReceiptLabel', () => {
+	test("uses the payer's name", () => {
+		expect(gcashReceiptLabel('Nico')).toBe("Nico's gcash");
 	});
 });

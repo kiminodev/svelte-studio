@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { peso, receiptDateLabel } from '$lib/beezy/format';
+	import { gcashReceiptLabel } from '$lib/beezy/gcash';
 	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
@@ -65,7 +66,7 @@
 				{/snippet}
 			</ReceiptLine>
 			{#if payerGcash}
-				<ReceiptLine label="Send to" text={payerGcash} />
+				<ReceiptLine label={gcashReceiptLabel(payerName)} text={payerGcash} />
 			{/if}
 			<ReceiptLine label="Total expense" text={peso(breakdown.total)} big />
 			<ReceiptLine

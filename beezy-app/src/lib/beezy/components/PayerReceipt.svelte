@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { bundleReceiptDateLabel, peso, sortNewestFirst } from '$lib/beezy/format';
+	import { gcashReceiptLabel } from '$lib/beezy/gcash';
 	import { calcPayerBundle } from '$lib/beezy/settlement';
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
@@ -72,7 +73,7 @@
 				{/snippet}
 			</ReceiptLine>
 			{#if payerGcash}
-				<ReceiptLine label="Send to" text={payerGcash} />
+				<ReceiptLine label={gcashReceiptLabel(payerName)} text={payerGcash} />
 			{/if}
 			<ReceiptLine
 				label="Split between"

@@ -25,3 +25,8 @@ export function parseGcash(value: string): GcashParse {
 	if (digits.length === GCASH_LENGTH) return { ok: true, value: digits };
 	return { ok: false };
 }
+
+/** Receipt label for a payer's GCash number, e.g. "Nico's gcash". */
+export function gcashReceiptLabel(name: string): string {
+	return `${name}'s gcash`;
+}
