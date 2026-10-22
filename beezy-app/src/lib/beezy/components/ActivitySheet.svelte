@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { parseAmount } from '$lib/beezy/format';
 	import type { CreateActivityInput } from '$lib/beezy/store';
 	import type { Activity, Event } from '$lib/beezy/types';
 	import {
@@ -74,7 +75,7 @@
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		const trimmed = name.trim();
-		const amount = Number(price);
+		const amount = parseAmount(price);
 		const payer = participants.find((p) => p.id === paidById);
 		if (!trimmed || Number.isNaN(amount) || amount < 0 || !eventId || !payer) {
 			oninvalid?.('Fill all fields');

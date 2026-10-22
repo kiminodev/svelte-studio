@@ -1,18 +1,39 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/components/cn';
 
 	interface Props {
 		label: string;
 		value: string;
 		warn?: boolean;
+		hint?: string;
 		class?: string;
+		onclick?: () => void;
 	}
 
-	let { label, value, warn = false, class: className = '' }: Props = $props();
+	let {
+		label,
+		value,
+		warn = false,
+		hint,
+		class: className = '',
+		onclick
+	}: Props = $props();
 </script>
 
-<div class={cn('stat-cell', className)}>
+{#snippet body()}
 	<div class="lbl">{label}</div>
 	<div class={cn('val', warn && 'warn')}>{value}</div>
-</div>
+	{#if hint}
+		<div class="hint">{hint}</div>
+	{/if}
+{/snippet}
+
+{#if onclick}
+	<button type="button" class={cn('stat-cell', className)} {onclick} aria-label="Edit {label}">
+		{@render body()}
+	</button>
+{:else}
+	<div class={cn('stat-cell', className)}>
+		{@render body()}
+	</div>
+{/if}

@@ -39,6 +39,7 @@
 		onremoveparticipant?: (id: string) => void;
 		onaddexpense?: () => void;
 		onsettleup?: () => void;
+		onedit?: () => void;
 		ondelete?: () => void;
 	}
 
@@ -50,6 +51,7 @@
 		onremoveparticipant,
 		onaddexpense,
 		onsettleup,
+		onedit,
 		ondelete
 	}: Props = $props();
 
@@ -128,7 +130,12 @@
 </script>
 
 <StatGrid>
-	<StatCell label="Budget" value={peso(event.budget)} />
+	<StatCell
+		label="Budget"
+		hint="tap to edit"
+		value={peso(event.budget)}
+		onclick={onedit}
+	/>
 	<StatCell label="Spent" value={peso(full.total)} />
 	<StatCell
 		label="Each person"
