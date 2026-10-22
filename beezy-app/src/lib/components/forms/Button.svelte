@@ -16,6 +16,7 @@
 		'aria-pressed'?: boolean | 'true' | 'false' | 'mixed';
 		class?: string;
 		onclick?: (event: MouseEvent) => void;
+		onmousedown?: (event: MouseEvent) => void;
 		children?: Snippet;
 	}
 
@@ -29,6 +30,7 @@
 		'aria-pressed': ariaPressed,
 		class: className = '',
 		onclick,
+		onmousedown,
 		children
 	}: Props = $props();
 </script>
@@ -39,6 +41,7 @@
 	{disabled}
 	aria-pressed={ariaPressed}
 	{onclick}
+	{onmousedown}
 	class={cn(
 		'btn',
 		`btn-${variant}`,

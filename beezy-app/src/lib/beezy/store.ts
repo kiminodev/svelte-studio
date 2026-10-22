@@ -161,7 +161,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
 }
 
 /**
- * Append a participant to an event.
+ * Add a participant to an event. Newest friends go first so they show at the
+ * top of the trip list.
  * Returns `null` when the event is missing, the name is blank, or the name is
  * already used on this trip (nicknames keep Who-paid receipts unambiguous).
  */
@@ -176,7 +177,7 @@ export async function addParticipant(eventId: string, name: string): Promise<Par
 	const participant: Participant = { id: uid(), name: trimmed };
 	const updated: Event = {
 		...event,
-		participants: [...event.participants, participant]
+		participants: [participant, ...event.participants]
 	};
 	await writeOne(STORES.events, updated);
 	return participant;

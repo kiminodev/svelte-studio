@@ -24,9 +24,22 @@
 			onadd?.();
 		}
 	}
+
+	/** Keep the name field focused when tapping Add so the next friend is one keystroke away. */
+	function keepInputFocus(event: MouseEvent) {
+		event.preventDefault();
+	}
 </script>
 
 <div class={cn('add-pax', className)}>
 	<Input id={inputId} bind:value {placeholder} autocomplete="off" {onkeydown} />
-	<Button variant="yellow" size="sm" type="button" onclick={onadd}>Add</Button>
+	<Button
+		variant="yellow"
+		size="sm"
+		type="button"
+		onmousedown={keepInputFocus}
+		onclick={onadd}
+	>
+		Add
+	</Button>
 </div>

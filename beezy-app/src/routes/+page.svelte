@@ -438,6 +438,8 @@
 		const participant = await addParticipant(eventId, name);
 		if (!participant) return;
 		await refreshFromStore();
+		await tick();
+		focusParticipantInput();
 		showToast(`Added ${name}`);
 	}
 
