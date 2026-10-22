@@ -10,7 +10,6 @@
 		name: string;
 		paid: number;
 		balance: number;
-		removable?: boolean;
 		class?: string;
 		onremove?: () => void;
 	}
@@ -19,7 +18,6 @@
 		name,
 		paid,
 		balance,
-		removable = false,
 		class: className = '',
 		onremove
 	}: Props = $props();
@@ -36,7 +34,7 @@
 	</div>
 	<div class="pax-trail">
 		<span class={cn('bal', variant)}>{pesoSigned(balance)}</span>
-		{#if removable && onremove}
+		{#if onremove}
 			<button type="button" class="pax-remove" aria-label="Remove {name}" onclick={onremove}>
 				<Icon name="x" />
 			</button>

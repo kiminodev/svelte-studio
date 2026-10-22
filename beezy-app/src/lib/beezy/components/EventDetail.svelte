@@ -51,17 +51,28 @@
 	}: Props = $props();
 
 	let paxName = $state('');
-	let pendingDelete = $state<null | { kind: 'event' } | { kind: 'person'; id: string; name: string }>(
-		null
-	);
+	let pendingDelete = $state<
+		| null
+		| { kind: 'event' }
+		| { kind: 'person'; id: string; name: string }
+		| { kind: 'person-blocked'; name: string }
+	>(null);
 
-	const confirmMessage = $derived(
-		pendingDelete?.kind === 'person'
-			? `${pendingDelete.name} will be taken off this trip. You can add them again later.`
-			: 'This deletes the trip and every expense in it. You cannot undo this.'
-	);
+	const confirmMessage = $derived.by(() => {
+		if (pendingDelete?.kind === 'person-blocked') {
+			return `${pendingDelete.name} already paid for an activity, settle up first`;
+		}
+		if (pendingDelete?.kind === 'person') {
+			return `${pendingDelete.name} will be taken off this trip. You can add them again later.`;
+		}
+		return 'This deletes the trip and every expense in it. You cannot undo this.';
+	});
 	const confirmLabel = $derived(
-		pendingDelete?.kind === 'person' ? 'Remove' : 'Delete trip'
+		pendingDelete?.kind === 'person-blocked'
+			? ''
+			: pendingDelete?.kind === 'person'
+				? 'Remove'
+				: 'Delete trip'
 	);
 
 	const full = $derived(calcEvent(event, event.activities));
@@ -89,10 +100,19 @@
 		paxName = '';
 	}
 
+	function requestRemovePerson(id: string, name: string) {
+		if (!canRemoveParticipant(id, event.activities)) {
+			pendingDelete = { kind: 'person-blocked', name };
+			return;
+		}
+		pendingDelete = { kind: 'person', id, name };
+	}
+
 	function handleConfirmDelete() {
 		const pending = pendingDelete;
 		pendingDelete = null;
 		if (!pending) return;
+		if (pending.kind === 'person-blocked') return;
 		if (pending.kind === 'person') {
 			onremoveparticipant?.(pending.id);
 			return;
@@ -133,8 +153,7 @@
 			name={p.name}
 			paid={paidForParticipant(p.id)}
 			balance={row?.balance ?? 0}
-			removable={canRemoveParticipant(p.id, event.activities)}
-			onremove={() => (pendingDelete = { kind: 'person', id: p.id, name: p.name })}
+			onremove={() => requestRemovePerson(p.id, p.name)}
 		/>
 	{/each}
 
