@@ -124,4 +124,4 @@
 	.receipt-payer-name {
 		margin-left: 6px;
 	}
-}</style>
+</style>
