@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { peso } from '$lib/beezy/format';
 import {
-	balanceStatus,
 	balanceVariant,
 	calcActivity,
 	calcEvent,
@@ -228,22 +227,20 @@ describe('payEventSummary', () => {
 	});
 });
 
-describe('balanceVariant / balanceStatus', () => {
+describe('balanceVariant', () => {
 	test('treats |balance| ≤ 0.5 as settled (zero)', () => {
 		expect(balanceVariant(0)).toBe('zero');
 		expect(balanceVariant(0.5)).toBe('zero');
 		expect(balanceVariant(-0.5)).toBe('zero');
-		expect(balanceStatus(0)).toBe('settled up');
-		expect(balanceStatus(0.49)).toBe('settled up');
 	});
 
 	test('positive above 0.5 is owed', () => {
 		expect(balanceVariant(0.51)).toBe('pos');
-		expect(balanceStatus(1200)).toBe(`is owed ${peso(1200)}`);
+		expect(balanceVariant(1200)).toBe('pos');
 	});
 
 	test('negative below -0.5 owes', () => {
 		expect(balanceVariant(-0.51)).toBe('neg');
-		expect(balanceStatus(-800)).toBe(`owes ${peso(800)}`);
+		expect(balanceVariant(-800)).toBe('neg');
 	});
 });

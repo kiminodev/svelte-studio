@@ -85,10 +85,6 @@
 	const allSettled = $derived(isEventSettled(event, event.activities));
 	const noParticipants = $derived(event.participants.length === 0);
 
-	function paidForParticipant(id: string): number {
-		return full.rows.find((r) => r.id === id)?.paid ?? 0;
-	}
-
 	function outstandingRow(id: string) {
 		return outstanding.rows.find((r) => r.id === id);
 	}
@@ -155,13 +151,12 @@
 <AddParticipantRow bind:value={paxName} bind:gcash={paxGcash} onadd={handleAdd} />
 
 {#if event.participants.length > 0}
-	<SectionLabel left="Who's in, and who owes" />
+	<SectionLabel left="Who's in" />
 
 	{#each event.participants as p (p.id)}
 		{@const row = outstandingRow(p.id)}
 		<ParticipantRow
 			name={p.name}
-			paid={paidForParticipant(p.id)}
 			balance={row?.balance ?? 0}
 			gcash={p.gcash}
 			onremove={() => requestRemovePerson(p.id, p.name)}

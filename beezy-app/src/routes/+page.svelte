@@ -204,7 +204,7 @@
 		if (detailEvent) {
 			return {
 				title: detailEvent.title,
-				subtitle: "Who's in, and who owes",
+				subtitle: "Who's in",
 				back: true
 			};
 		}
