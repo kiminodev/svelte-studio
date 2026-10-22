@@ -353,14 +353,24 @@
 	border: 0;
 }
 
-.add-pax {
+.add-pax-block {
 	display: flex;
+	flex-direction: column;
 	gap: 8px;
 	margin-bottom: 12px;
 }
 
+.add-pax {
+	display: flex;
+	gap: 8px;
+}
+
 .add-pax .input {
 	flex: 1 1 auto;
+}
+
+.add-pax-block > .input {
+	width: 100%;
 }
 
 .add-pax .btn {

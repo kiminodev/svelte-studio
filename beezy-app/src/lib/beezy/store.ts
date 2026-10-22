@@ -7,6 +7,7 @@ import {
 } from '$lib/beezy/db';
 import { sortNewestFirst } from '$lib/beezy/format';
 import { uid } from '$lib/beezy/id';
+import { parseGcash } from '$lib/beezy/gcash';
 import { canRemoveParticipant, participantNameTaken } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
@@ -165,8 +166,13 @@ export async function deleteEvent(id: string): Promise<boolean> {
  * top of the trip list.
  * Returns `null` when the event is missing, the name is blank, or the name is
  * already used on this trip (nicknames keep Who-paid receipts unambiguous).
+ * Optional `gcash` must be exactly 11 digits when provided.
  */
-export async function addParticipant(eventId: string, name: string): Promise<Participant | null> {
+export async function addParticipant(
+	eventId: string,
+	name: string,
+	gcash?: string
+): Promise<Participant | null> {
 	const trimmed = name.trim();
 	if (!trimmed) return null;
 
@@ -174,7 +180,14 @@ export async function addParticipant(eventId: string, name: string): Promise<Par
 	if (!event) return null;
 	if (participantNameTaken(event.participants, trimmed)) return null;
 
-	const participant: Participant = { id: uid(), name: trimmed };
+	const parsedGcash = parseGcash(gcash ?? '');
+	if (!parsedGcash.ok) return null;
+
+	const participant: Participant = {
+		id: uid(),
+		name: trimmed,
+		...(parsedGcash.value ? { gcash: parsedGcash.value } : {})
+	};
 	const updated: Event = {
 		...event,
 		participants: [participant, ...event.participants]

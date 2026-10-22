@@ -35,6 +35,7 @@ export function formatActivitySummary(
 	lines.push(fmtDateTime(activity.createdAt));
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);
+	if (ac.payer?.gcash) lines.push('Send to:      ' + ac.payer.gcash);
 	lines.push('Total:        ' + peso(ac.total));
 	lines.push('Split between ' + ac.n + (ac.n === 1 ? ' person' : ' people'));
 	lines.push('Each pays:    ' + (ac.n ? peso(ac.share) : '—'));
@@ -128,6 +129,7 @@ export function formatPayerSummary(
 	lines.push(countLabel);
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);
+	if (bundle.payer?.gcash) lines.push('Send to:      ' + bundle.payer.gcash);
 	lines.push('Split between ' + bundle.n + (bundle.n === 1 ? ' person' : ' people'));
 	for (const item of items) {
 		const mark = item.settled ? '  settled' : '';

@@ -434,8 +434,8 @@
 		view = sanitizeView(view, store.events, store.activities);
 	}
 
-	async function handleAddParticipant(eventId: string, name: string) {
-		const participant = await addParticipant(eventId, name);
+	async function handleAddParticipant(eventId: string, name: string, gcash?: string) {
+		const participant = await addParticipant(eventId, name, gcash);
 		if (!participant) return;
 		await refreshFromStore();
 		await tick();
@@ -585,8 +585,10 @@
 		{:else if detailEvent}
 			<EventDetail
 				event={detailEvent}
-				onaddparticipant={(name: string) => handleAddParticipant(detailEvent.id, name)}
+				onaddparticipant={(name: string, gcash?: string) =>
+					handleAddParticipant(detailEvent.id, name, gcash)}
 				onduplicate={handleDuplicateParticipant}
+				oninvalid={showToast}
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => openActivitySheet(null, detailEvent.id)}
 				onsettleup={() => goPayEvent(detailEvent.id)}

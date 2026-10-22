@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { peso } from '$lib/beezy/format';
+	import { parseGcash } from '$lib/beezy/gcash';
 	import {
 		canRemoveParticipant,
 		calcEvent,
@@ -32,8 +33,9 @@
 
 	interface Props {
 		event: EventDetailData;
-		onaddparticipant?: (name: string) => void;
+		onaddparticipant?: (name: string, gcash?: string) => void;
 		onduplicate?: (name: string) => void;
+		oninvalid?: (message: string) => void;
 		onremoveparticipant?: (id: string) => void;
 		onaddexpense?: () => void;
 		onsettleup?: () => void;
@@ -44,6 +46,7 @@
 		event,
 		onaddparticipant,
 		onduplicate,
+		oninvalid,
 		onremoveparticipant,
 		onaddexpense,
 		onsettleup,
@@ -51,6 +54,7 @@
 	}: Props = $props();
 
 	let paxName = $state('');
+	let paxGcash = $state('');
 	let pendingDelete = $state<
 		| null
 		| { kind: 'event' }
@@ -96,8 +100,14 @@
 			onduplicate?.(name);
 			return;
 		}
-		onaddparticipant?.(name);
+		const gcash = parseGcash(paxGcash);
+		if (!gcash.ok) {
+			oninvalid?.('GCash must be 11 digits, or leave it blank.');
+			return;
+		}
+		onaddparticipant?.(name, gcash.value);
 		paxName = '';
+		paxGcash = '';
 	}
 
 	function requestRemovePerson(id: string, name: string) {
@@ -142,7 +152,7 @@
 	right={event.participants.length ? `${event.participants.length} added` : undefined}
 />
 
-<AddParticipantRow bind:value={paxName} onadd={handleAdd} />
+<AddParticipantRow bind:value={paxName} bind:gcash={paxGcash} onadd={handleAdd} />
 
 {#if event.participants.length > 0}
 	<SectionLabel left="Who's in, and who owes" />
@@ -153,6 +163,7 @@
 			name={p.name}
 			paid={paidForParticipant(p.id)}
 			balance={row?.balance ?? 0}
+			gcash={p.gcash}
 			onremove={() => requestRemovePerson(p.id, p.name)}
 		/>
 	{/each}

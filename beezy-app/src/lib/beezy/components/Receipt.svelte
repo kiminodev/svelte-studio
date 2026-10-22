@@ -30,6 +30,7 @@
 
 	const breakdown = $derived(calcActivity(activity, { participants }));
 	const payerName = $derived(breakdown.payer?.name ?? activity.paidByName);
+	const payerGcash = $derived(breakdown.payer?.gcash);
 	const collectTotal = $derived(breakdown.others.length * breakdown.share);
 	const dateLabel = $derived(receiptDateLabel(activity.createdAt, activity.updatedAt));
 	const thanks = $derived(
@@ -63,6 +64,9 @@
 					<span class="receipt-payer-name">{payerName}</span>
 				{/snippet}
 			</ReceiptLine>
+			{#if payerGcash}
+				<ReceiptLine label="Send to" text={payerGcash} />
+			{/if}
 			<ReceiptLine label="Total expense" text={peso(breakdown.total)} big />
 			<ReceiptLine
 				label="Split between"

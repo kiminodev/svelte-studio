@@ -24,6 +24,7 @@
 
 	const bundle = $derived(calcPayerBundle(activities, paidById, { participants }));
 	const payerName = $derived(bundle.payer?.name ?? '—');
+	const payerGcash = $derived(bundle.payer?.gcash);
 	const collectTotal = $derived(bundle.others.length * bundle.share);
 	const openCount = $derived(bundle.activities.filter((a) => !a.settled).length);
 	const countLabel = $derived.by(() => {
@@ -70,6 +71,9 @@
 					<span class="receipt-payer-name">{payerName}</span>
 				{/snippet}
 			</ReceiptLine>
+			{#if payerGcash}
+				<ReceiptLine label="Send to" text={payerGcash} />
+			{/if}
 			<ReceiptLine
 				label="Split between"
 				text={`${bundle.n} ${bundle.n === 1 ? 'person' : 'people'}`}

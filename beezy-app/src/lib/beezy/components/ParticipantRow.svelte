@@ -10,6 +10,7 @@
 		name: string;
 		paid: number;
 		balance: number;
+		gcash?: string;
 		class?: string;
 		onremove?: () => void;
 	}
@@ -18,6 +19,7 @@
 		name,
 		paid,
 		balance,
+		gcash,
 		class: className = '',
 		onremove
 	}: Props = $props();
@@ -31,6 +33,9 @@
 	<div>
 		<div class="nm">{name}</div>
 		<div class="sub">{subtitle}</div>
+		{#if gcash}
+			<div class="sub">GCash {gcash}</div>
+		{/if}
 	</div>
 	<div class="pax-trail">
 		<span class={cn('bal', variant)}>{pesoSigned(balance)}</span>
