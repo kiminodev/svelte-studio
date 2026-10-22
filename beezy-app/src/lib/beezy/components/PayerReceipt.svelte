@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { bundleReceiptDateLabel, peso, sortNewestFirst } from '$lib/beezy/format';
 	import { gcashReceiptLabel } from '$lib/beezy/gcash';
-	import { calcPayerBundle } from '$lib/beezy/settlement';
+	import { calcPayerBundle, splitBetweenLabel } from '$lib/beezy/settlement';
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
@@ -25,7 +25,7 @@
 	const bundle = $derived(calcPayerBundle(activities, paidById, { participants }));
 	const payerName = $derived(bundle.payer?.name ?? '—');
 	const payerGcash = $derived(bundle.payer?.gcash);
-	const collectTotal = $derived(bundle.others.length * bundle.share);
+	const collectTotal = $derived(bundle.collectTotal);
 	const countLabel = $derived.by(() => {
 		const n = bundle.activities.length;
 		const all = n === 1 ? '1 expense' : `${n} expenses`;
@@ -70,10 +70,7 @@
 			{#if payerGcash}
 				<ReceiptLine label={gcashReceiptLabel(payerName)} text={payerGcash} />
 			{/if}
-			<ReceiptLine
-				label="Split between"
-				text={`${bundle.n} ${bundle.n === 1 ? 'person' : 'people'}`}
-			/>
+			<ReceiptLine class="r-split" label="Split between" text={splitBetweenLabel(bundle)} />
 
 			<hr class="r-divider" />
 			<div class="r-section-title">They covered</div>
@@ -95,20 +92,28 @@
 				</p>
 			{:else if bundle.others.length > 0}
 				<hr class="r-divider" />
-				<ReceiptLine
-					class="r-each-pays"
-					label="Each pays"
-					text={bundle.n ? peso(bundle.share) : '—'}
-				/>
+				{#if !bundle.splitMixed}
+					<ReceiptLine
+						class="r-each-pays"
+						label="Each pays"
+						text={bundle.n ? peso(bundle.share) : '—'}
+					/>
+				{/if}
 				<ReceiptLine label="{payerName} collects" text={peso(collectTotal)} big />
-				<p class="muted-block receipt-collect-note">
-					{payerName}'s own share is {peso(bundle.share)} — already covered, since they paid
-					the full {peso(bundle.total)}.
-				</p>
+				{#if !bundle.splitMixed}
+					<p class="muted-block receipt-collect-note">
+						{payerName}'s own share is {peso(bundle.share)} — already covered, since they paid
+						the full {peso(bundle.total)}.
+					</p>
+				{/if}
 			{:else}
 				<hr class="r-divider" />
 				<p class="muted-block" style="font-size: 12px">
-					Solo trip — only {payerName} is on this event, so there's nothing to split.
+					{#if bundle.splitEveryone}
+						Solo trip — only {payerName} is on this event, so there's nothing to split.
+					{:else}
+						Only {payerName} is on this split, so there's nothing to collect.
+					{/if}
 				</p>
 			{/if}
 		</div>

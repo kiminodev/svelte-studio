@@ -654,6 +654,20 @@ button.stat-cell:active {
 	font-weight: 600;
 }
 
+.r-line.r-split {
+	align-items: flex-start;
+}
+
+.r-line.r-split .k {
+	flex: 0 0 auto;
+}
+
+.r-line.r-split .v {
+	text-align: right;
+	max-width: 64%;
+	word-break: break-word;
+}
+
 .r-line.r-paidby .v {
 	display: inline-flex;
 	align-items: center;
@@ -763,6 +777,17 @@ button.stat-cell:active {
 	margin-top: 14px;
 }
 
+.payer-receipts {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	padding-bottom: 8px;
+}
+
+.payer-receipt-block .section-label {
+	margin-bottom: 10px;
+}
+
 .receipt-lines {
 	margin-top: 12px;
 }
@@ -795,7 +820,8 @@ button.stat-cell:active {
 	color: var(--muted);
 }
 
-.seg button[aria-selected='true'] {
+.seg button[aria-selected='true'],
+.seg button[aria-checked='true'] {
 	background: var(--surface);
 	color: var(--fg);
 	box-shadow: var(--elev-raised);
@@ -806,6 +832,51 @@ button.stat-cell:active {
 	font-size: 12px;
 	color: var(--muted);
 	line-height: 1.45;
+}
+
+.split-picks {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.split-pick {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	background: var(--surface);
+	cursor: pointer;
+}
+
+.split-pick:has(input:checked) {
+	border-color: var(--fg);
+}
+
+.split-pick:has(input:disabled) {
+	cursor: default;
+}
+
+.split-pick input {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--fg);
+	flex: 0 0 auto;
+}
+
+.split-pick-name {
+	color: var(--fg);
+	font-size: var(--text-base);
+}
+
+.split-pick-tag {
+	margin-left: auto;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--muted);
 }
 
 .sheet-note {

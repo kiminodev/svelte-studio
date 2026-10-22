@@ -26,6 +26,11 @@ export interface Activity {
 	createdAt: string;
 	updatedAt: string;
 	settled?: boolean;
+	/**
+	 * Participant ids this expense is split among (payer included).
+	 * Omit or leave empty to split equally with everyone on the event.
+	 */
+	splitWithIds?: string[];
 }
 
 /** Persisted app data (events, activities, and store creation timestamp). */
@@ -96,7 +101,7 @@ export interface ViewState {
 }
 
 /** Minimal activity fields needed for settlement math. */
-export type ActivityLike = Pick<Activity, 'price' | 'paidById' | 'settled'>;
+export type ActivityLike = Pick<Activity, 'price' | 'paidById' | 'settled' | 'splitWithIds'>;
 
 /** Per-participant balance row from equal-split tally. */
 export interface TallyRow {
@@ -125,6 +130,14 @@ export interface ActivityBreakdown {
 	share: number;
 	payer: Participant | null;
 	others: Participant[];
+	/** People this expense is split among (payer included). */
+	splitters: Participant[];
+	/** True when the split is the full event participant list. */
+	splitEveryone: boolean;
+	/** Amount friends still owe the payer (excludes the payer's own share). */
+	collectTotal: number;
+	/** Who-paid only: outstanding expenses use different split sets. */
+	splitMixed?: boolean;
 }
 
 /** Combined equal-split of every expense one person paid. */

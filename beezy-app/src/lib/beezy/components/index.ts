@@ -13,5 +13,6 @@ export { default as PayerReceipt } from './PayerReceipt.svelte';
 export { default as Receipt } from './Receipt.svelte';
 export { default as ReceiptModeToggle } from './ReceiptModeToggle.svelte';
 export { default as ReceiptLine } from './ReceiptLine.svelte';
+export { default as SplitByPicker } from './SplitByPicker.svelte';
 export { default as ReceiptMember } from './ReceiptMember.svelte';
 export { type ReceiptActivity } from './Receipt.svelte';

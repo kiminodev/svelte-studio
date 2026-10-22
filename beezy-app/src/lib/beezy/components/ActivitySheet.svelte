@@ -15,6 +15,7 @@
 		Sheet,
 		ConfirmSheet
 	} from '$lib/components';
+	import SplitByPicker, { type SplitMode } from './SplitByPicker.svelte';
 
 	interface Props {
 		open?: boolean;
@@ -54,11 +55,30 @@
 		return ev?.participants[0]?.id ?? '';
 	}
 
+	function participantIdsFor(eventId: string): string[] {
+		return events.find((e) => e.id === eventId)?.participants.map((p) => p.id) ?? [];
+	}
+
+	function initialSplitMode(): SplitMode {
+		return activity?.splitWithIds?.length ? 'choose' : 'everyone';
+	}
+
+	function initialSelectedIds(eventId: string): string[] {
+		const all = participantIdsFor(eventId);
+		const stored = activity?.splitWithIds ?? [];
+		if (!stored.length) return all;
+		const valid = stored.filter((id) => all.includes(id));
+		return valid.length ? valid : all;
+	}
+
 	const startEventId = untrack(() => initialEventId());
 	let name = $state(untrack(() => activity?.name ?? ''));
 	let price = $state<string | number>(untrack(() => activity?.price ?? ''));
 	let eventId = $state(startEventId);
 	let paidById = $state(untrack(() => initialPaidById(startEventId)));
+	let splitMode = $state<SplitMode>(untrack(() => initialSplitMode()));
+	let selectedIds = $state<string[]>(untrack(() => initialSelectedIds(startEventId)));
+	let lastEventId = $state(startEventId);
 
 	const selectedEvent = $derived(events.find((e) => e.id === eventId) ?? null);
 	const participants = $derived(selectedEvent?.participants ?? []);
@@ -70,6 +90,20 @@
 		if (paidById && ids.includes(paidById)) return;
 		const next = ids[0] ?? '';
 		if (paidById !== next) paidById = next;
+	});
+
+	/** Changing trips resets the split to everyone on the new event. */
+	$effect(() => {
+		if (eventId === lastEventId) return;
+		lastEventId = eventId;
+		splitMode = 'everyone';
+		selectedIds = participants.map((p) => p.id);
+	});
+
+	/** The person who paid is always on the split. */
+	$effect(() => {
+		if (!paidById || selectedIds.includes(paidById)) return;
+		selectedIds = [...selectedIds, paidById];
 	});
 
 	function handleSubmit(event: SubmitEvent) {
@@ -85,7 +119,8 @@
 			name: trimmed,
 			price: amount,
 			eventId,
-			paidById: payer.id
+			paidById: payer.id,
+			splitWithIds: splitMode === 'choose' ? selectedIds : undefined
 		});
 	}
 </script>
@@ -145,6 +180,16 @@
 					{/if}
 				</Select>
 			</Field>
+			{#if participants.length >= 2}
+				<Field label="Split by">
+					<SplitByPicker
+						{participants}
+						{paidById}
+						bind:mode={splitMode}
+						bind:selectedIds
+					/>
+				</Field>
+			{/if}
 			{#if noParticipants}
 				<HintCard emoji="💡">
 					This trip has no one on it yet. Add friends from the trip screen so Beezy can split the bill.
