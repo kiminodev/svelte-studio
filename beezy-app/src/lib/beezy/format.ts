@@ -51,3 +51,41 @@ export function fmtDateTime(iso: string): string {
 		d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
 	);
 }
+
+/**
+ * Receipt header timestamp, matching the Each-expense receipt.
+ * Appends ` · edited {datetime}` when the record changed after it was created.
+ */
+export function receiptDateLabel(createdAt: string, updatedAt?: string): string {
+	if (updatedAt && updatedAt !== createdAt) {
+		return `${fmtDateTime(createdAt)} · edited ${fmtDateTime(updatedAt)}`;
+	}
+	return fmtDateTime(createdAt);
+}
+
+type DatedItem = { createdAt: string; updatedAt?: string };
+
+/** Newest `createdAt` first — Payment lists and activity feeds. */
+export function sortNewestFirst<T extends { createdAt: string }>(items: readonly T[]): T[] {
+	return items
+		.slice()
+		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+/**
+ * Who-paid receipt timestamp: first expense logged, plus the latest edit
+ * across that person's expenses (same "created · edited" pattern).
+ * Order of `items` does not matter.
+ */
+export function bundleReceiptDateLabel(items: readonly DatedItem[]): string {
+	if (items.length === 0) return '';
+	let createdAt = items[0].createdAt;
+	let updatedAt: string | undefined;
+	for (const item of items) {
+		if (item.createdAt < createdAt) createdAt = item.createdAt;
+		if (item.updatedAt && item.updatedAt !== item.createdAt) {
+			if (!updatedAt || item.updatedAt > updatedAt) updatedAt = item.updatedAt;
+		}
+	}
+	return receiptDateLabel(createdAt, updatedAt);
+}

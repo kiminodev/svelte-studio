@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { fmtDateTime, peso } from '$lib/beezy/format';
+	import { peso, receiptDateLabel } from '$lib/beezy/format';
+	import { gcashReceiptLabel } from '$lib/beezy/gcash';
 	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
-	import ReceiptMember from './ReceiptMember.svelte';
 
 	export interface ReceiptActivity extends ActivityLike {
 		name: string;
@@ -30,13 +30,9 @@
 
 	const breakdown = $derived(calcActivity(activity, { participants }));
 	const payerName = $derived(breakdown.payer?.name ?? activity.paidByName);
+	const payerGcash = $derived(breakdown.payer?.gcash);
 	const collectTotal = $derived(breakdown.others.length * breakdown.share);
-	const dateLabel = $derived(
-		fmtDateTime(activity.createdAt) +
-			(activity.updatedAt && activity.updatedAt !== activity.createdAt
-				? ` · edited ${fmtDateTime(activity.updatedAt)}`
-				: '')
-	);
+	const dateLabel = $derived(receiptDateLabel(activity.createdAt, activity.updatedAt));
 	const thanks = $derived(
 		settled ? 'All square on this one 🤗' : 'Send this to the group 🤗'
 	);
@@ -68,24 +64,23 @@
 					<span class="receipt-payer-name">{payerName}</span>
 				{/snippet}
 			</ReceiptLine>
+			{#if payerGcash}
+				<ReceiptLine label={gcashReceiptLabel(payerName)} text={payerGcash} />
+			{/if}
 			<ReceiptLine label="Total expense" text={peso(breakdown.total)} big />
 			<ReceiptLine
 				label="Split between"
 				text={`${breakdown.n} ${breakdown.n === 1 ? 'person' : 'people'}`}
 			/>
-			<ReceiptLine label="Each pays" text={breakdown.n ? peso(breakdown.share) : '—'} />
 
 			{#if breakdown.others.length > 0}
 				<hr class="r-divider" />
-				<div class="r-section-title">{payerName} collects</div>
-				{#each breakdown.others as member (member.id)}
-					<ReceiptMember
-						name={member.name}
-						owesTo={payerName}
-						amount={breakdown.share}
-					/>
-				{/each}
-				<ReceiptLine label="Total to collect" text={peso(collectTotal)} total />
+				<ReceiptLine
+					class="r-each-pays"
+					label="Each pays"
+					text={breakdown.n ? peso(breakdown.share) : '—'}
+				/>
+				<ReceiptLine label="{payerName} collects" text={peso(collectTotal)} big />
 				<p class="muted-block receipt-collect-note">
 					{payerName}'s own share is {peso(breakdown.share)} — already covered, since they paid
 					the full {peso(breakdown.total)}.

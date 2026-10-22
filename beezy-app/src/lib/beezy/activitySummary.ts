@@ -1,4 +1,5 @@
-import { fmtDateTime, peso } from '$lib/beezy/format';
+import { bundleReceiptDateLabel, fmtDateTime, peso, sortNewestFirst } from '$lib/beezy/format';
+import { gcashReceiptLabel } from '$lib/beezy/gcash';
 import {
 	calcActivity,
 	calcPayerBundle,
@@ -35,17 +36,14 @@ export function formatActivitySummary(
 	lines.push(fmtDateTime(activity.createdAt));
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);
+	if (ac.payer?.gcash) lines.push(gcashReceiptLabel(payerName) + ': ' + ac.payer.gcash);
 	lines.push('Total:        ' + peso(ac.total));
 	lines.push('Split between ' + ac.n + (ac.n === 1 ? ' person' : ' people'));
-	lines.push('Each pays:    ' + (ac.n ? peso(ac.share) : '—'));
 
 	if (ac.others.length) {
 		lines.push('----------------------------------');
-		lines.push(payerName + ' collects:');
-		for (const p of ac.others) {
-			lines.push('  ' + p.name.padEnd(10) + ' ' + peso(ac.share));
-		}
-		lines.push('  ' + 'TOTAL'.padEnd(10) + ' ' + peso(ac.others.length * ac.share));
+		lines.push('Each pays:    ' + (ac.n ? peso(ac.share) : '—'));
+		lines.push(payerName + ' collects: ' + peso(ac.others.length * ac.share));
 	}
 
 	lines.push('----------------------------------');
@@ -96,6 +94,7 @@ export async function copyActivitySummary(
 /** Named expense fields required to list a Who-paid receipt. */
 export interface PayerSummaryActivity extends ActivitySummaryInput {
 	id?: string;
+	updatedAt?: string;
 }
 
 /**
@@ -108,40 +107,34 @@ export function formatPayerSummary(
 ): string {
 	const bundle = calcPayerBundle(activities, paidById, event);
 	const payerName = bundle.payer?.name ?? '—';
-	const openCount = bundle.activities.filter((a) => !a.settled).length;
 	const n = bundle.activities.length;
 	const countLabel = bundle.settled
 		? `${n === 1 ? '1 expense' : `${n} expenses`} · all settled`
-		: openCount < n
-			? `${openCount} of ${n} still open`
-			: n === 1
-				? '1 expense'
-				: `${n} expenses`;
-	const items = bundle.activities
-		.slice()
-		.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+		: n === 1
+			? '1 expense'
+			: `${n} expenses`;
+	const items = sortNewestFirst(bundle.activities);
 	const lines: string[] = [];
 
 	lines.push('Beezy — ' + event.title);
 	lines.push(payerName + "'s expenses");
+	const dateLabel = bundleReceiptDateLabel(items);
+	if (dateLabel) lines.push(dateLabel);
 	lines.push(countLabel);
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);
+	if (bundle.payer?.gcash) lines.push(gcashReceiptLabel(payerName) + ': ' + bundle.payer.gcash);
 	lines.push('Split between ' + bundle.n + (bundle.n === 1 ? ' person' : ' people'));
 	for (const item of items) {
 		const mark = item.settled ? '  settled' : '';
 		lines.push('  ' + item.name.padEnd(14) + ' ' + peso(item.price) + mark);
 	}
-	lines.push((openCount < n ? 'Still open:   ' : 'Total:        ') + peso(bundle.total));
-	lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+	if (n > 1) lines.push('Total:        ' + peso(bundle.total));
 
 	if (bundle.others.length) {
 		lines.push('----------------------------------');
-		lines.push(payerName + ' collects:');
-		for (const p of bundle.others) {
-			lines.push('  ' + p.name.padEnd(10) + ' ' + peso(bundle.share));
-		}
-		lines.push('  ' + 'TOTAL'.padEnd(10) + ' ' + peso(bundle.others.length * bundle.share));
+		lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
+		lines.push(payerName + ' collects: ' + peso(bundle.others.length * bundle.share));
 	}
 
 	lines.push('----------------------------------');

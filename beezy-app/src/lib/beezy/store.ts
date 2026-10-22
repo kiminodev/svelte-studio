@@ -5,7 +5,9 @@ import {
 	STORES,
 	type StoreName
 } from '$lib/beezy/db';
+import { sortNewestFirst } from '$lib/beezy/format';
 import { uid } from '$lib/beezy/id';
+import { parseGcash } from '$lib/beezy/gcash';
 import { canRemoveParticipant, participantNameTaken } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
 
@@ -42,8 +44,8 @@ export async function loadStore(): Promise<Store> {
 	]);
 
 	return {
-		events: sortByCreatedAtDesc(events),
-		activities: activities.map(migrateActivitySettled),
+		events: sortNewestFirst(events),
+		activities: sortNewestFirst(activities.map(migrateActivitySettled)),
 		created: meta?.created ?? Date.now()
 	};
 }
@@ -81,16 +83,16 @@ export async function getEventById(id: string): Promise<Event | null> {
 	return event ?? null;
 }
 
-/** Activities for one event (insertion order from IndexedDB, not sorted). */
+/** Activities for one event, newest first. */
 export async function getActivitiesFor(eventId: string): Promise<Activity[]> {
 	const activities = await readByIndex<Activity>(STORES.activities, 'byEvent', eventId);
-	return activities.map(migrateActivitySettled);
+	return sortNewestFirst(activities.map(migrateActivitySettled));
 }
 
 /** All activities sorted newest-first by `createdAt`. */
 export async function getAllActivities(): Promise<Activity[]> {
 	const activities = await readAll<Activity>(STORES.activities);
-	return sortByCreatedAtDesc(activities.map(migrateActivitySettled));
+	return sortNewestFirst(activities.map(migrateActivitySettled));
 }
 
 /** Create an event with an empty participant list (mockup `saveEvent`). */
@@ -160,11 +162,17 @@ export async function deleteEvent(id: string): Promise<boolean> {
 }
 
 /**
- * Append a participant to an event.
+ * Add a participant to an event. Newest friends go first so they show at the
+ * top of the trip list.
  * Returns `null` when the event is missing, the name is blank, or the name is
  * already used on this trip (nicknames keep Who-paid receipts unambiguous).
+ * Optional `gcash` must be exactly 11 digits when provided.
  */
-export async function addParticipant(eventId: string, name: string): Promise<Participant | null> {
+export async function addParticipant(
+	eventId: string,
+	name: string,
+	gcash?: string
+): Promise<Participant | null> {
 	const trimmed = name.trim();
 	if (!trimmed) return null;
 
@@ -172,10 +180,17 @@ export async function addParticipant(eventId: string, name: string): Promise<Par
 	if (!event) return null;
 	if (participantNameTaken(event.participants, trimmed)) return null;
 
-	const participant: Participant = { id: uid(), name: trimmed };
+	const parsedGcash = parseGcash(gcash ?? '');
+	if (!parsedGcash.ok) return null;
+
+	const participant: Participant = {
+		id: uid(),
+		name: trimmed,
+		...(parsedGcash.value ? { gcash: parsedGcash.value } : {})
+	};
 	const updated: Event = {
 		...event,
-		participants: [...event.participants, participant]
+		participants: [participant, ...event.participants]
 	};
 	await writeOne(STORES.events, updated);
 	return participant;
@@ -368,12 +383,6 @@ export async function unsettleActivity(id: string): Promise<Activity | null> {
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
-}
-
-function sortByCreatedAtDesc<T extends { createdAt: string }>(items: T[]): T[] {
-	return items
-		.slice()
-		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 async function readAll<T>(storeName: StoreName): Promise<T[]> {

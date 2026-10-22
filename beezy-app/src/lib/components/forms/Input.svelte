@@ -11,6 +11,8 @@
 		required?: boolean;
 		autocomplete?: HTMLInputElement['autocomplete'];
 		inputmode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url' | 'search';
+		maxlength?: number;
+		'aria-label'?: string;
 		class?: string;
 		oninput?: (event: Event) => void;
 		onchange?: (event: Event) => void;
@@ -27,6 +29,8 @@
 		required = false,
 		autocomplete,
 		inputmode,
+		maxlength,
+		'aria-label': ariaLabel,
 		class: className = '',
 		oninput,
 		onchange,
@@ -44,6 +48,8 @@
 	{required}
 	{autocomplete}
 	{inputmode}
+	{maxlength}
+	aria-label={ariaLabel}
 	class={cn('input', className)}
 	{oninput}
 	{onchange}

@@ -157,9 +157,3 @@ export function balanceVariant(balance: number): BalanceVariant {
 	return 'zero';
 }
 
-/** Human-readable outstanding status for a participant row subtitle. */
-export function balanceStatus(balance: number): string {
-	if (Math.abs(balance) < 0.5) return 'settled up';
-	if (balance > 0) return `is owed ${peso(balance)}`;
-	return `owes ${peso(-balance)}`;
-}

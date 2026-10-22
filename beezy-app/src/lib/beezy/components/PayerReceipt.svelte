@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { peso } from '$lib/beezy/format';
+	import { bundleReceiptDateLabel, peso, sortNewestFirst } from '$lib/beezy/format';
+	import { gcashReceiptLabel } from '$lib/beezy/gcash';
 	import { calcPayerBundle } from '$lib/beezy/settlement';
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
-	import ReceiptMember from './ReceiptMember.svelte';
 
 	interface Props {
 		eventTitle: string;
@@ -24,19 +24,15 @@
 
 	const bundle = $derived(calcPayerBundle(activities, paidById, { participants }));
 	const payerName = $derived(bundle.payer?.name ?? '—');
+	const payerGcash = $derived(bundle.payer?.gcash);
 	const collectTotal = $derived(bundle.others.length * bundle.share);
-	const openCount = $derived(bundle.activities.filter((a) => !a.settled).length);
 	const countLabel = $derived.by(() => {
 		const n = bundle.activities.length;
 		const all = n === 1 ? '1 expense' : `${n} expenses`;
-		if (bundle.settled) return `${all} · all settled`;
-		if (openCount < n) return `${openCount} of ${n} still open`;
-		return all;
+		return bundle.settled ? `${all} · all settled` : all;
 	});
-	const totalLabel = $derived(openCount < bundle.activities.length ? 'Still open' : 'Total expense');
-	const items = $derived(
-		bundle.activities.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-	);
+	const items = $derived(sortNewestFirst(bundle.activities));
+	const dateLabel = $derived(bundleReceiptDateLabel(items));
 	const thanks = $derived(
 		bundle.settled ? 'All square on this one 🤗' : 'Send this to the group 🤗'
 	);
@@ -52,6 +48,9 @@
 			</div>
 			<div class="r-title">{eventTitle}</div>
 			<div class="r-activity">{payerName}'s expenses</div>
+			{#if dateLabel}
+				<div class="r-date">{dateLabel}</div>
+			{/if}
 			<div class="r-date">{countLabel}</div>
 			{#if bundle.settled}
 				<div class="r-settled">
@@ -68,6 +67,9 @@
 					<span class="receipt-payer-name">{payerName}</span>
 				{/snippet}
 			</ReceiptLine>
+			{#if payerGcash}
+				<ReceiptLine label={gcashReceiptLabel(payerName)} text={payerGcash} />
+			{/if}
 			<ReceiptLine
 				label="Split between"
 				text={`${bundle.n} ${bundle.n === 1 ? 'person' : 'people'}`}
@@ -82,12 +84,9 @@
 					text={peso(item.price)}
 				/>
 			{/each}
-			<ReceiptLine label={totalLabel} text={peso(bundle.total)} big />
-			<ReceiptLine
-				class="r-each-pays"
-				label="Each pays"
-				text={bundle.n ? peso(bundle.share) : '—'}
-			/>
+			{#if items.length > 1}
+				<ReceiptLine label="Total expense" text={peso(bundle.total)} big />
+			{/if}
 
 			{#if bundle.settled}
 				<hr class="r-divider" />
@@ -96,11 +95,12 @@
 				</p>
 			{:else if bundle.others.length > 0}
 				<hr class="r-divider" />
-				<div class="r-section-title">{payerName} collects</div>
-				{#each bundle.others as member (member.id)}
-					<ReceiptMember name={member.name} owesTo={payerName} amount={bundle.share} />
-				{/each}
-				<ReceiptLine label="Total to collect" text={peso(collectTotal)} total />
+				<ReceiptLine
+					class="r-each-pays"
+					label="Each pays"
+					text={bundle.n ? peso(bundle.share) : '—'}
+				/>
+				<ReceiptLine label="{payerName} collects" text={peso(collectTotal)} big />
 				<p class="muted-block receipt-collect-note">
 					{payerName}'s own share is {peso(bundle.share)} — already covered, since they paid
 					the full {peso(bundle.total)}.
@@ -123,10 +123,5 @@
 <style>
 	.receipt-payer-name {
 		margin-left: 6px;
-	}
-
-	.receipt :global(.r-each-pays .k),
-	.receipt :global(.r-each-pays .v) {
-		color: var(--success);
 	}
 </style>

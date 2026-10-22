@@ -2,6 +2,8 @@
 export interface Participant {
 	id: string;
 	name: string;
+	/** Optional 11-digit GCash number shown on receipts as "{name}'s gcash". */
+	gcash?: string;
 }
 
 /** A trip or gathering that groups participants and expenses. */

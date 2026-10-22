@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { peso } from '$lib/beezy/format';
+	import { parseGcash } from '$lib/beezy/gcash';
 	import {
 		canRemoveParticipant,
 		calcEvent,
@@ -32,8 +33,9 @@
 
 	interface Props {
 		event: EventDetailData;
-		onaddparticipant?: (name: string) => void;
+		onaddparticipant?: (name: string, gcash?: string) => void;
 		onduplicate?: (name: string) => void;
+		oninvalid?: (message: string) => void;
 		onremoveparticipant?: (id: string) => void;
 		onaddexpense?: () => void;
 		onsettleup?: () => void;
@@ -44,6 +46,7 @@
 		event,
 		onaddparticipant,
 		onduplicate,
+		oninvalid,
 		onremoveparticipant,
 		onaddexpense,
 		onsettleup,
@@ -51,17 +54,29 @@
 	}: Props = $props();
 
 	let paxName = $state('');
-	let pendingDelete = $state<null | { kind: 'event' } | { kind: 'person'; id: string; name: string }>(
-		null
-	);
+	let paxGcash = $state('');
+	let pendingDelete = $state<
+		| null
+		| { kind: 'event' }
+		| { kind: 'person'; id: string; name: string }
+		| { kind: 'person-blocked'; name: string }
+	>(null);
 
-	const confirmMessage = $derived(
-		pendingDelete?.kind === 'person'
-			? `${pendingDelete.name} will be taken off this trip. You can add them again later.`
-			: 'This deletes the trip and every expense in it. You cannot undo this.'
-	);
+	const confirmMessage = $derived.by(() => {
+		if (pendingDelete?.kind === 'person-blocked') {
+			return `${pendingDelete.name} already paid for an activity, settle up first`;
+		}
+		if (pendingDelete?.kind === 'person') {
+			return `${pendingDelete.name} will be taken off this trip. You can add them again later.`;
+		}
+		return 'This deletes the trip and every expense in it. You cannot undo this.';
+	});
 	const confirmLabel = $derived(
-		pendingDelete?.kind === 'person' ? 'Remove' : 'Delete trip'
+		pendingDelete?.kind === 'person-blocked'
+			? ''
+			: pendingDelete?.kind === 'person'
+				? 'Remove'
+				: 'Delete trip'
 	);
 
 	const full = $derived(calcEvent(event, event.activities));
@@ -69,10 +84,6 @@
 	const overBudget = $derived(full.total > event.budget);
 	const allSettled = $derived(isEventSettled(event, event.activities));
 	const noParticipants = $derived(event.participants.length === 0);
-
-	function paidForParticipant(id: string): number {
-		return full.rows.find((r) => r.id === id)?.paid ?? 0;
-	}
 
 	function outstandingRow(id: string) {
 		return outstanding.rows.find((r) => r.id === id);
@@ -85,14 +96,29 @@
 			onduplicate?.(name);
 			return;
 		}
-		onaddparticipant?.(name);
+		const gcash = parseGcash(paxGcash);
+		if (!gcash.ok) {
+			oninvalid?.('GCash must be 11 digits, or leave it blank.');
+			return;
+		}
+		onaddparticipant?.(name, gcash.value);
 		paxName = '';
+		paxGcash = '';
+	}
+
+	function requestRemovePerson(id: string, name: string) {
+		if (!canRemoveParticipant(id, event.activities)) {
+			pendingDelete = { kind: 'person-blocked', name };
+			return;
+		}
+		pendingDelete = { kind: 'person', id, name };
 	}
 
 	function handleConfirmDelete() {
 		const pending = pendingDelete;
 		pendingDelete = null;
 		if (!pending) return;
+		if (pending.kind === 'person-blocked') return;
 		if (pending.kind === 'person') {
 			onremoveparticipant?.(pending.id);
 			return;
@@ -122,19 +148,18 @@
 	right={event.participants.length ? `${event.participants.length} added` : undefined}
 />
 
-<AddParticipantRow bind:value={paxName} onadd={handleAdd} />
+<AddParticipantRow bind:value={paxName} bind:gcash={paxGcash} onadd={handleAdd} />
 
 {#if event.participants.length > 0}
-	<SectionLabel left="Who's in, and who owes" />
+	<SectionLabel left="Who's in" />
 
 	{#each event.participants as p (p.id)}
 		{@const row = outstandingRow(p.id)}
 		<ParticipantRow
 			name={p.name}
-			paid={paidForParticipant(p.id)}
 			balance={row?.balance ?? 0}
-			removable={canRemoveParticipant(p.id, event.activities)}
-			onremove={() => (pendingDelete = { kind: 'person', id: p.id, name: p.name })}
+			gcash={p.gcash}
+			onremove={() => requestRemovePerson(p.id, p.name)}
 		/>
 	{/each}
 

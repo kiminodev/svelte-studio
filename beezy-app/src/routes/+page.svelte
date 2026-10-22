@@ -8,7 +8,7 @@
 		listPayerIds,
 		payEventSummary
 	} from '$lib/beezy/settlement';
-	import { fmtDate, peso } from '$lib/beezy/format';
+	import { fmtDate, peso, sortNewestFirst } from '$lib/beezy/format';
 	import {
 		addParticipant,
 		createActivity,
@@ -204,7 +204,7 @@
 		if (detailEvent) {
 			return {
 				title: detailEvent.title,
-				subtitle: "Who's in, and who owes",
+				subtitle: "Who's in",
 				back: true
 			};
 		}
@@ -258,18 +258,15 @@
 	}
 
 	function activitiesFor(eventId: string): Activity[] {
-		return activities.filter((a) => a.eventId === eventId);
+		return sortNewestFirst(activities.filter((a) => a.eventId === eventId));
 	}
 
 	/** Activities newest-first with event title (mirrors getAllActivities + join). */
 	function allActivitiesFlat() {
-		return activities
-			.slice()
-			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-			.map((a) => ({
-				...a,
-				eventTitle: eventById(a.eventId)?.title ?? ''
-			}));
+		return sortNewestFirst(activities).map((a) => ({
+			...a,
+			eventTitle: eventById(a.eventId)?.title ?? ''
+		}));
 	}
 
 	const editingActivity = $derived.by(() => {
@@ -437,10 +434,12 @@
 		view = sanitizeView(view, store.events, store.activities);
 	}
 
-	async function handleAddParticipant(eventId: string, name: string) {
-		const participant = await addParticipant(eventId, name);
+	async function handleAddParticipant(eventId: string, name: string, gcash?: string) {
+		const participant = await addParticipant(eventId, name, gcash);
 		if (!participant) return;
 		await refreshFromStore();
+		await tick();
+		focusParticipantInput();
 		showToast(`Added ${name}`);
 	}
 
@@ -586,8 +585,10 @@
 		{:else if detailEvent}
 			<EventDetail
 				event={detailEvent}
-				onaddparticipant={(name: string) => handleAddParticipant(detailEvent.id, name)}
+				onaddparticipant={(name: string, gcash?: string) =>
+					handleAddParticipant(detailEvent.id, name, gcash)}
 				onduplicate={handleDuplicateParticipant}
+				oninvalid={showToast}
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => openActivitySheet(null, detailEvent.id)}
 				onsettleup={() => goPayEvent(detailEvent.id)}
@@ -698,6 +699,7 @@
 						paidByName={payer.name}
 						createdAt={bundle.activities[0]?.createdAt ?? ''}
 						variant="payment"
+						showPaidBy={false}
 						settled={bundle.settled}
 						oweLabel={bundle.others.length
 							? `${bundle.others.length} owe ${each} each`

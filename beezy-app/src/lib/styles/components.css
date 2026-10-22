@@ -157,6 +157,8 @@
 	font-weight: 600;
 	font-size: var(--text-base);
 	white-space: nowrap;
+	justify-self: end;
+	text-align: right;
 }
 
 .act-sub {
@@ -173,6 +175,8 @@
 	font-family: var(--font-mono);
 	font-size: 11px;
 	color: var(--muted);
+	justify-self: end;
+	text-align: right;
 }
 
 /* Empty state */
@@ -349,14 +353,24 @@
 	border: 0;
 }
 
-.add-pax {
+.add-pax-block {
 	display: flex;
+	flex-direction: column;
 	gap: 8px;
 	margin-bottom: 12px;
 }
 
+.add-pax {
+	display: flex;
+	gap: 8px;
+}
+
 .add-pax .input {
 	flex: 1 1 auto;
+}
+
+.add-pax-block > .input {
+	width: 100%;
 }
 
 .add-pax .btn {
@@ -618,6 +632,11 @@
 .r-line.r-paidby .v {
 	display: inline-flex;
 	align-items: center;
+}
+
+.r-line.r-each-pays .k,
+.r-line.r-each-pays .v {
+	color: var(--success);
 }
 
 .r-line.r-total {

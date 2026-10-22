@@ -15,6 +15,8 @@
 		oweLabel?: string;
 		/** Payment variant: overrides date line (e.g. "tap to settle →"). */
 		statusLabel?: string;
+		/** Hide the "paid · name" chip (Who paid list already names the payer). */
+		showPaidBy?: boolean;
 		type?: 'button' | 'submit' | 'reset';
 		disabled?: boolean;
 		class?: string;
@@ -32,15 +34,16 @@
 		settled = false,
 		oweLabel,
 		statusLabel,
+		showPaidBy = true,
 		type = 'button',
 		disabled = false,
 		class: className = '',
 		onclick
 	}: Props = $props();
 
-	const edited = $derived(updatedAt && updatedAt !== createdAt);
+	const edited = $derived(Boolean(updatedAt && updatedAt !== createdAt));
 	const dateLabel = $derived(
-		fmtDate(createdAt) + (edited && updatedAt ? ` · edited ${fmtDate(updatedAt)}` : '')
+		edited && updatedAt ? `edited ${fmtDate(updatedAt)}` : fmtDate(createdAt)
 	);
 	const footerLabel = $derived(statusLabel ?? dateLabel);
 </script>
@@ -60,12 +63,16 @@
 	</span>
 	<span class="act-price">{peso(price)}</span>
 	<span class="act-sub">
-		<Chip variant="paid">paid · {paidByName}</Chip>
+		{#if showPaidBy}
+			<Chip variant="paid">paid · {paidByName}</Chip>
+		{/if}
 		{#if variant === 'payment' && oweLabel}
 			<span>{oweLabel}</span>
 		{:else if eventTitle}
 			<Chip variant="event">{eventTitle}</Chip>
 		{/if}
 	</span>
-	<span class="act-edited">{footerLabel}</span>
+	{#if footerLabel}
+		<span class="act-edited">{footerLabel}</span>
+	{/if}
 </button>

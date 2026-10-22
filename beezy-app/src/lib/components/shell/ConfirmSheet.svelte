@@ -44,7 +44,9 @@
 			<p class="confirm-copy">{message}</p>
 			<div class="confirm-actions">
 				<Button variant="secondary" onclick={oncancel}>Cancel</Button>
-				<Button variant="danger" onclick={onconfirm}>{confirmLabel}</Button>
+				{#if confirmLabel}
+					<Button variant="danger" onclick={onconfirm}>{confirmLabel}</Button>
+				{/if}
 			</div>
 		</div>
 	{/snippet}

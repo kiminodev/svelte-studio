@@ -1,42 +1,41 @@
 <script lang="ts">
-	import { peso, pesoSigned } from '$lib/beezy/format';
-	import {
-		balanceStatus,
-		balanceVariant
-	} from '$lib/beezy/settlement';
+	import { pesoSigned } from '$lib/beezy/format';
+	import { balanceVariant } from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 
 	interface Props {
 		name: string;
-		paid: number;
 		balance: number;
-		removable?: boolean;
+		gcash?: string;
 		class?: string;
 		onremove?: () => void;
 	}
 
 	let {
 		name,
-		paid,
 		balance,
-		removable = false,
+		gcash,
 		class: className = '',
 		onremove
 	}: Props = $props();
 
 	const variant = $derived(balanceVariant(balance));
-	const subtitle = $derived(`paid ${peso(paid)} · ${balanceStatus(balance)}`);
+	const showBalance = $derived(variant !== 'zero');
 </script>
 
 <div class={cn('pax-row', className)}>
 	<Avatar {name} size="lg" />
 	<div>
 		<div class="nm">{name}</div>
-		<div class="sub">{subtitle}</div>
+		{#if gcash}
+			<div class="sub">GCash {gcash}</div>
+		{/if}
 	</div>
 	<div class="pax-trail">
-		<span class={cn('bal', variant)}>{pesoSigned(balance)}</span>
-		{#if removable && onremove}
+		{#if showBalance}
+			<span class={cn('bal', variant)}>{pesoSigned(balance)}</span>
+		{/if}
+		{#if onremove}
 			<button type="button" class="pax-remove" aria-label="Remove {name}" onclick={onremove}>
 				<Icon name="x" />
 			</button>
