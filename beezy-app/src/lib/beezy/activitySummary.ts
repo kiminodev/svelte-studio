@@ -1,4 +1,4 @@
-import { fmtDateTime, peso } from '$lib/beezy/format';
+import { bundleReceiptDateLabel, fmtDateTime, peso } from '$lib/beezy/format';
 import {
 	calcActivity,
 	calcPayerBundle,
@@ -96,6 +96,7 @@ export async function copyActivitySummary(
 /** Named expense fields required to list a Who-paid receipt. */
 export interface PayerSummaryActivity extends ActivitySummaryInput {
 	id?: string;
+	updatedAt?: string;
 }
 
 /**
@@ -124,6 +125,8 @@ export function formatPayerSummary(
 
 	lines.push('Beezy — ' + event.title);
 	lines.push(payerName + "'s expenses");
+	const dateLabel = bundleReceiptDateLabel(items);
+	if (dateLabel) lines.push(dateLabel);
 	lines.push(countLabel);
 	lines.push('----------------------------------');
 	lines.push('Paid by:      ' + payerName);

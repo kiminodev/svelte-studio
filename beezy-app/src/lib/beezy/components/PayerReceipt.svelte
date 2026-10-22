@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peso } from '$lib/beezy/format';
+	import { bundleReceiptDateLabel, peso } from '$lib/beezy/format';
 	import { calcPayerBundle } from '$lib/beezy/settlement';
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
@@ -37,6 +37,7 @@
 	const items = $derived(
 		bundle.activities.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 	);
+	const dateLabel = $derived(bundleReceiptDateLabel(items));
 	const thanks = $derived(
 		bundle.settled ? 'All square on this one 🤗' : 'Send this to the group 🤗'
 	);
@@ -52,6 +53,9 @@
 			</div>
 			<div class="r-title">{eventTitle}</div>
 			<div class="r-activity">{payerName}'s expenses</div>
+			{#if dateLabel}
+				<div class="r-date">{dateLabel}</div>
+			{/if}
 			<div class="r-date">{countLabel}</div>
 			{#if bundle.settled}
 				<div class="r-settled">

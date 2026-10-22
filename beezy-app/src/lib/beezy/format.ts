@@ -51,3 +51,32 @@ export function fmtDateTime(iso: string): string {
 		d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
 	);
 }
+
+/**
+ * Receipt header timestamp, matching the Each-expense receipt.
+ * Appends ` · edited {datetime}` when the record changed after it was created.
+ */
+export function receiptDateLabel(createdAt: string, updatedAt?: string): string {
+	if (updatedAt && updatedAt !== createdAt) {
+		return `${fmtDateTime(createdAt)} · edited ${fmtDateTime(updatedAt)}`;
+	}
+	return fmtDateTime(createdAt);
+}
+
+type DatedItem = { createdAt: string; updatedAt?: string };
+
+/**
+ * Who-paid receipt timestamp: first expense logged, plus the latest edit
+ * across that person's expenses (same "created · edited" pattern).
+ */
+export function bundleReceiptDateLabel(items: readonly DatedItem[]): string {
+	if (items.length === 0) return '';
+	const createdAt = items[0].createdAt;
+	let updatedAt: string | undefined;
+	for (const item of items) {
+		if (item.updatedAt && item.updatedAt !== item.createdAt) {
+			if (!updatedAt || item.updatedAt > updatedAt) updatedAt = item.updatedAt;
+		}
+	}
+	return receiptDateLabel(createdAt, updatedAt);
+}

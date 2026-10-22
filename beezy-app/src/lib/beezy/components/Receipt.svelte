@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fmtDateTime, peso } from '$lib/beezy/format';
+	import { peso, receiptDateLabel } from '$lib/beezy/format';
 	import { calcActivity, type ActivityLike, type Participant } from '$lib/beezy/settlement';
 	import { Avatar, Icon, cn } from '$lib/components';
 	import ReceiptLine from './ReceiptLine.svelte';
@@ -31,12 +31,7 @@
 	const breakdown = $derived(calcActivity(activity, { participants }));
 	const payerName = $derived(breakdown.payer?.name ?? activity.paidByName);
 	const collectTotal = $derived(breakdown.others.length * breakdown.share);
-	const dateLabel = $derived(
-		fmtDateTime(activity.createdAt) +
-			(activity.updatedAt && activity.updatedAt !== activity.createdAt
-				? ` · edited ${fmtDateTime(activity.updatedAt)}`
-				: '')
-	);
+	const dateLabel = $derived(receiptDateLabel(activity.createdAt, activity.updatedAt));
 	const thanks = $derived(
 		settled ? 'All square on this one 🤗' : 'Send this to the group 🤗'
 	);
