@@ -239,6 +239,13 @@
 	color: var(--muted);
 }
 
+.stat-cell .hint {
+	font-family: var(--font-mono);
+	font-size: 9.5px;
+	color: var(--muted);
+	margin-top: 2px;
+}
+
 .stat-cell .val {
 	font-family: var(--font-mono);
 	font-weight: 600;
@@ -248,6 +255,23 @@
 
 .stat-cell .val.warn {
 	color: var(--danger);
+}
+
+button.stat-cell {
+	width: 100%;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+button.stat-cell:hover {
+	border-color: var(--fg);
+}
+
+button.stat-cell:active {
+	transform: scale(0.992);
 }
 
 .pax-row {

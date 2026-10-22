@@ -21,6 +21,7 @@
 		settleActivity,
 		unsettleActivity,
 		updateActivity,
+		updateEvent,
 		type CreateActivityInput,
 		type CreateEventInput
 	} from '$lib/beezy/store';
@@ -275,6 +276,12 @@
 		return activities.find((a) => a.id === sheet.id) ?? null;
 	});
 
+	const editingEvent = $derived.by(() => {
+		const sheet = view.sheet;
+		if (sheet?.type !== 'new-event' || !sheet.id) return null;
+		return events.find((e) => e.id === sheet.id) ?? null;
+	});
+
 	/**
 	 * Drop sub-screens / edit sheets that point at deleted/missing records.
 	 * New-event and About sheets stay as-is; activity sheets with a missing id close.
@@ -302,6 +309,9 @@
 
 		const sheet = next.sheet;
 		if (sheet?.type === 'activity' && sheet.id && !acts.some((a) => a.id === sheet.id)) {
+			next.sheet = null;
+		}
+		if (sheet?.type === 'new-event' && sheet.id && !evs.some((e) => e.id === sheet.id)) {
 			next.sheet = null;
 		}
 
@@ -377,7 +387,12 @@
 	}
 
 	function openNewEventSheet() {
-		patchView({ sheet: { type: 'new-event' }, menu: false });
+		openEventSheet();
+	}
+
+	/** Open create (`id` null) or edit-trip sheet. */
+	function openEventSheet(id: string | null = null) {
+		patchView({ sheet: { type: 'new-event', id }, menu: false });
 	}
 
 	/** Open create (`id` null) or edit activity sheet; `eventId` presets the event select. */
@@ -509,6 +524,21 @@
 	}
 
 	async function handleSaveEvent(input: CreateEventInput) {
+		const sheet = view.sheet;
+		if (sheet?.type !== 'new-event') return;
+
+		if (sheet.id) {
+			const updated = await updateEvent(sheet.id, input);
+			if (!updated) {
+				showToast('Could not update this trip');
+				return;
+			}
+			patchView({ sheet: null });
+			await refreshFromStore();
+			showToast('Trip updated');
+			return;
+		}
+
 		const created = await createEvent(input);
 		const store = await loadStore();
 		events = store.events;
@@ -592,6 +622,7 @@
 				onremoveparticipant={(id: string) => handleRemoveParticipant(detailEvent.id, id)}
 				onaddexpense={() => openActivitySheet(null, detailEvent.id)}
 				onsettleup={() => goPayEvent(detailEvent.id)}
+				onedit={() => openEventSheet(detailEvent.id)}
 				ondelete={() => handleDeleteEvent(detailEvent.id)}
 			/>
 		{:else if payActivity && payEvent && view.sub?.type === 'pay-activity'}
@@ -910,8 +941,13 @@
 		<ThemePicker value={theme} onchange={handleTheme} />
 	</MenuPopover>
 
-	{#if view.sheet?.type === 'new-event'}
-		<NewEventSheet onclose={closeSheet} onsave={handleSaveEvent} oninvalid={showToast} />
+	{#if view.sheet?.type === 'new-event' && (!view.sheet.id || editingEvent)}
+		<NewEventSheet
+			event={editingEvent}
+			onclose={closeSheet}
+			onsave={handleSaveEvent}
+			oninvalid={showToast}
+		/>
 	{:else if view.sheet?.type === 'activity' && (!view.sheet.id || editingActivity)}
 		<ActivitySheet
 			events={events}

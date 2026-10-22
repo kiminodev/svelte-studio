@@ -67,6 +67,8 @@ export type PayReceiptMode = 'expense' | 'person';
 
 export interface NewEventSheetState {
 	type: 'new-event';
+	/** When set, the sheet edits this trip instead of creating one. */
+	id?: string | null;
 }
 
 export interface ActivitySheetState {

@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { parseAmount } from '$lib/beezy/format';
 	import type { CreateEventInput } from '$lib/beezy/store';
+	import type { Event } from '$lib/beezy/types';
 	import {
 		AmountInput,
 		Button,
@@ -12,22 +15,24 @@
 
 	interface Props {
 		open?: boolean;
+		event?: Event | null;
 		onclose?: () => void;
 		onsave?: (input: CreateEventInput) => void;
 		oninvalid?: (message: string) => void;
 	}
 
-	let { open = true, onclose, onsave, oninvalid }: Props = $props();
+	let { open = true, event = null, onclose, onsave, oninvalid }: Props = $props();
 
-	let title = $state('');
-	let budget = $state<string | number>('');
-
+	const editing = $derived(Boolean(event));
 	const formId = 'form-event';
 
-	function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
+	let title = $state(untrack(() => event?.title ?? ''));
+	let budget = $state<string | number>(untrack(() => event?.budget ?? ''));
+
+	function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
 		const trimmed = title.trim();
-		const amount = Number(budget);
+		const amount = parseAmount(budget);
 		if (!trimmed || Number.isNaN(amount) || amount < 0) {
 			oninvalid?.('Add a title and budget');
 			return;
@@ -42,7 +47,7 @@
 			<IconButton aria-label="Close" onclick={onclose}>
 				<Icon name="close" />
 			</IconButton>
-			<h3>New event</h3>
+			<h3>{editing ? 'Edit trip' : 'New event'}</h3>
 		</div>
 	{/snippet}
 	{#snippet body()}
@@ -70,13 +75,17 @@
 					required
 				/>
 			</Field>
-			<p class="muted-block sheet-note">
-				After creating, tap the trip to add friends and log expenses.
-			</p>
+			{#if !editing}
+				<p class="muted-block sheet-note">
+					After creating, tap the trip to add friends and log expenses.
+				</p>
+			{/if}
 		</form>
 	{/snippet}
 	{#snippet foot()}
 		<Button variant="secondary" block onclick={onclose}>Cancel</Button>
-		<Button variant="yellow" block type="submit" form={formId}>Add event</Button>
+		<Button variant="yellow" block type="submit" form={formId}>
+			{editing ? 'Save changes' : 'Add event'}
+		</Button>
 	{/snippet}
 </Sheet>

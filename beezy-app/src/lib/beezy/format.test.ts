@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { bundleReceiptDateLabel, receiptDateLabel, sortNewestFirst } from '$lib/beezy/format';
+import {
+	bundleReceiptDateLabel,
+	formatAmountInput,
+	parseAmount,
+	receiptDateLabel,
+	sortNewestFirst
+} from '$lib/beezy/format';
 
 describe('receiptDateLabel', () => {
 	test('is just the created datetime when never edited', () => {
@@ -34,6 +40,29 @@ describe('bundleReceiptDateLabel', () => {
 
 	test('is empty when there are no expenses', () => {
 		expect(bundleReceiptDateLabel([])).toBe('');
+	});
+});
+
+describe('formatAmountInput / parseAmount', () => {
+	test('groups thousands with commas while typing', () => {
+		expect(formatAmountInput('')).toBe('');
+		expect(formatAmountInput('5')).toBe('5');
+		expect(formatAmountInput('5000')).toBe('5,000');
+		expect(formatAmountInput('50000')).toBe('50,000');
+		expect(formatAmountInput('100000')).toBe('100,000');
+		expect(formatAmountInput(1500)).toBe('1,500');
+	});
+
+	test('strips junk and leading zeros', () => {
+		expect(formatAmountInput('5,000')).toBe('5,000');
+		expect(formatAmountInput('05,000')).toBe('5,000');
+		expect(formatAmountInput('abc')).toBe('');
+	});
+
+	test('parses grouped or raw amounts', () => {
+		expect(parseAmount('5,000')).toBe(5000);
+		expect(parseAmount(5000)).toBe(5000);
+		expect(parseAmount('')).toBeNaN();
 	});
 });
 

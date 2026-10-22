@@ -1,6 +1,40 @@
 /** Whole-peso formatter shared by {@link peso} and {@link pesoSigned}. */
 const pesoFmt = new Intl.NumberFormat('en-PH', { maximumFractionDigits: 0 });
 
+/** Cap typed amounts so the field stays readable (₱9,999,999,999). */
+export const AMOUNT_MAX_DIGITS = 10;
+
+/**
+ * Keep digits only, drop leading zeros (except a lone 0), and cap length.
+ * Used while typing so commas and letters never stick.
+ */
+export function normalizeAmountDigits(value: string): string {
+	const digits = value.replace(/\D/g, '').slice(0, AMOUNT_MAX_DIGITS);
+	return digits.replace(/^0+(?=\d)/, '');
+}
+
+/**
+ * Group a typed amount with thousands separators, e.g. "5000" → "5,000".
+ * Empty input stays empty so the placeholder can show.
+ */
+export function formatAmountInput(value: string | number): string {
+	const raw = typeof value === 'number' ? String(Math.round(Math.abs(value))) : value;
+	const digits = normalizeAmountDigits(raw);
+	if (!digits) return '';
+	return pesoFmt.format(Number(digits));
+}
+
+/**
+ * Parse a typed amount that may include grouping commas.
+ * Empty or non-numeric input returns NaN.
+ */
+export function parseAmount(value: string | number): number {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+	const digits = normalizeAmountDigits(value);
+	if (!digits) return NaN;
+	return Number(digits);
+}
+
 /**
  * Format a number as Philippine peso (absolute value, no sign).
  * Rounds to the nearest whole peso before formatting.
