@@ -1,4 +1,4 @@
-import { bundleReceiptDateLabel, fmtDateTime, peso } from '$lib/beezy/format';
+import { bundleReceiptDateLabel, fmtDateTime, peso, sortNewestFirst } from '$lib/beezy/format';
 import {
 	calcActivity,
 	calcPayerBundle,
@@ -118,9 +118,7 @@ export function formatPayerSummary(
 			: n === 1
 				? '1 expense'
 				: `${n} expenses`;
-	const items = bundle.activities
-		.slice()
-		.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+	const items = sortNewestFirst(bundle.activities);
 	const lines: string[] = [];
 
 	lines.push('Beezy — ' + event.title);

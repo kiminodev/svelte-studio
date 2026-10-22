@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { bundleReceiptDateLabel, peso } from '$lib/beezy/format';
+	import { bundleReceiptDateLabel, peso, sortNewestFirst } from '$lib/beezy/format';
 	import { calcPayerBundle } from '$lib/beezy/settlement';
 	import type { Activity, Participant } from '$lib/beezy/types';
 	import { Avatar, Icon, cn } from '$lib/components';
@@ -34,9 +34,7 @@
 		return all;
 	});
 	const totalLabel = $derived(openCount < bundle.activities.length ? 'Still open' : 'Total expense');
-	const items = $derived(
-		bundle.activities.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-	);
+	const items = $derived(sortNewestFirst(bundle.activities));
 	const dateLabel = $derived(bundleReceiptDateLabel(items));
 	const thanks = $derived(
 		bundle.settled ? 'All square on this one 🤗' : 'Send this to the group 🤗'

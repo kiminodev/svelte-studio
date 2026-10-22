@@ -8,7 +8,7 @@
 		listPayerIds,
 		payEventSummary
 	} from '$lib/beezy/settlement';
-	import { fmtDate, peso } from '$lib/beezy/format';
+	import { fmtDate, peso, sortNewestFirst } from '$lib/beezy/format';
 	import {
 		addParticipant,
 		createActivity,
@@ -258,18 +258,15 @@
 	}
 
 	function activitiesFor(eventId: string): Activity[] {
-		return activities.filter((a) => a.eventId === eventId);
+		return sortNewestFirst(activities.filter((a) => a.eventId === eventId));
 	}
 
 	/** Activities newest-first with event title (mirrors getAllActivities + join). */
 	function allActivitiesFlat() {
-		return activities
-			.slice()
-			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-			.map((a) => ({
-				...a,
-				eventTitle: eventById(a.eventId)?.title ?? ''
-			}));
+		return sortNewestFirst(activities).map((a) => ({
+			...a,
+			eventTitle: eventById(a.eventId)?.title ?? ''
+		}));
 	}
 
 	const editingActivity = $derived.by(() => {

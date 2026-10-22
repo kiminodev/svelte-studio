@@ -5,6 +5,7 @@ import {
 	STORES,
 	type StoreName
 } from '$lib/beezy/db';
+import { sortNewestFirst } from '$lib/beezy/format';
 import { uid } from '$lib/beezy/id';
 import { canRemoveParticipant, participantNameTaken } from '$lib/beezy/settlement';
 import type { Activity, Event, Participant, Store } from '$lib/beezy/types';
@@ -42,8 +43,8 @@ export async function loadStore(): Promise<Store> {
 	]);
 
 	return {
-		events: sortByCreatedAtDesc(events),
-		activities: activities.map(migrateActivitySettled),
+		events: sortNewestFirst(events),
+		activities: sortNewestFirst(activities.map(migrateActivitySettled)),
 		created: meta?.created ?? Date.now()
 	};
 }
@@ -81,16 +82,16 @@ export async function getEventById(id: string): Promise<Event | null> {
 	return event ?? null;
 }
 
-/** Activities for one event (insertion order from IndexedDB, not sorted). */
+/** Activities for one event, newest first. */
 export async function getActivitiesFor(eventId: string): Promise<Activity[]> {
 	const activities = await readByIndex<Activity>(STORES.activities, 'byEvent', eventId);
-	return activities.map(migrateActivitySettled);
+	return sortNewestFirst(activities.map(migrateActivitySettled));
 }
 
 /** All activities sorted newest-first by `createdAt`. */
 export async function getAllActivities(): Promise<Activity[]> {
 	const activities = await readAll<Activity>(STORES.activities);
-	return sortByCreatedAtDesc(activities.map(migrateActivitySettled));
+	return sortNewestFirst(activities.map(migrateActivitySettled));
 }
 
 /** Create an event with an empty participant list (mockup `saveEvent`). */
@@ -368,12 +369,6 @@ export async function unsettleActivity(id: string): Promise<Activity | null> {
 	};
 	await writeOne(STORES.activities, updated);
 	return updated;
-}
-
-function sortByCreatedAtDesc<T extends { createdAt: string }>(items: T[]): T[] {
-	return items
-		.slice()
-		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 async function readAll<T>(storeName: StoreName): Promise<T[]> {
