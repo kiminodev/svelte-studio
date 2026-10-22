@@ -15,6 +15,8 @@
 		oweLabel?: string;
 		/** Payment variant: overrides date line (e.g. "tap to settle →"). */
 		statusLabel?: string;
+		/** Hide the "paid · name" chip (Who paid list already names the payer). */
+		showPaidBy?: boolean;
 		type?: 'button' | 'submit' | 'reset';
 		disabled?: boolean;
 		class?: string;
@@ -32,6 +34,7 @@
 		settled = false,
 		oweLabel,
 		statusLabel,
+		showPaidBy = true,
 		type = 'button',
 		disabled = false,
 		class: className = '',
@@ -60,7 +63,9 @@
 	</span>
 	<span class="act-price">{peso(price)}</span>
 	<span class="act-sub">
-		<Chip variant="paid">paid · {paidByName}</Chip>
+		{#if showPaidBy}
+			<Chip variant="paid">paid · {paidByName}</Chip>
+		{/if}
 		{#if variant === 'payment' && oweLabel}
 			<span>{oweLabel}</span>
 		{:else if eventTitle}

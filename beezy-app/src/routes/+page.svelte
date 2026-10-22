@@ -695,6 +695,7 @@
 						paidByName={payer.name}
 						createdAt={bundle.activities[0]?.createdAt ?? ''}
 						variant="payment"
+						showPaidBy={false}
 						settled={bundle.settled}
 						oweLabel={bundle.others.length
 							? `${bundle.others.length} owe ${each} each`

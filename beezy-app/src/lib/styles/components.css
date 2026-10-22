@@ -157,6 +157,8 @@
 	font-weight: 600;
 	font-size: var(--text-base);
 	white-space: nowrap;
+	justify-self: end;
+	text-align: right;
 }
 
 .act-sub {
@@ -173,6 +175,8 @@
 	font-family: var(--font-mono);
 	font-size: 11px;
 	color: var(--muted);
+	justify-self: end;
+	text-align: right;
 }
 
 /* Empty state */
