@@ -111,15 +111,12 @@ export function formatPayerSummary(
 ): string {
 	const bundle = calcPayerBundle(activities, paidById, event);
 	const payerName = bundle.payer?.name ?? '—';
-	const openCount = bundle.activities.filter((a) => !a.settled).length;
 	const n = bundle.activities.length;
 	const countLabel = bundle.settled
 		? `${n === 1 ? '1 expense' : `${n} expenses`} · all settled`
-		: openCount < n
-			? `${openCount} of ${n} still open`
-			: n === 1
-				? '1 expense'
-				: `${n} expenses`;
+		: n === 1
+			? '1 expense'
+			: `${n} expenses`;
 	const items = sortNewestFirst(bundle.activities);
 	const lines: string[] = [];
 
@@ -136,7 +133,7 @@ export function formatPayerSummary(
 		const mark = item.settled ? '  settled' : '';
 		lines.push('  ' + item.name.padEnd(14) + ' ' + peso(item.price) + mark);
 	}
-	lines.push((openCount < n ? 'Still open:   ' : 'Total:        ') + peso(bundle.total));
+	lines.push('Total:        ' + peso(bundle.total));
 	lines.push('Each pays:    ' + (bundle.n ? peso(bundle.share) : '—'));
 
 	if (bundle.others.length) {

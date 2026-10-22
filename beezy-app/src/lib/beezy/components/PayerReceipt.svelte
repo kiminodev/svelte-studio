@@ -27,15 +27,11 @@
 	const payerName = $derived(bundle.payer?.name ?? '—');
 	const payerGcash = $derived(bundle.payer?.gcash);
 	const collectTotal = $derived(bundle.others.length * bundle.share);
-	const openCount = $derived(bundle.activities.filter((a) => !a.settled).length);
 	const countLabel = $derived.by(() => {
 		const n = bundle.activities.length;
 		const all = n === 1 ? '1 expense' : `${n} expenses`;
-		if (bundle.settled) return `${all} · all settled`;
-		if (openCount < n) return `${openCount} of ${n} still open`;
-		return all;
+		return bundle.settled ? `${all} · all settled` : all;
 	});
-	const totalLabel = $derived(openCount < bundle.activities.length ? 'Still open' : 'Total expense');
 	const items = $derived(sortNewestFirst(bundle.activities));
 	const dateLabel = $derived(bundleReceiptDateLabel(items));
 	const thanks = $derived(
@@ -89,7 +85,7 @@
 					text={peso(item.price)}
 				/>
 			{/each}
-			<ReceiptLine label={totalLabel} text={peso(bundle.total)} big />
+			<ReceiptLine label="Total expense" text={peso(bundle.total)} big />
 			<ReceiptLine
 				class="r-each-pays"
 				label="Each pays"
