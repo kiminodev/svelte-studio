@@ -212,6 +212,7 @@
 
 .empty .btn {
 	margin-top: 18px;
+	white-space: nowrap;
 }
 
 /* Event detail */
